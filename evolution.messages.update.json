@@ -1,0 +1,18 @@
+{
+    "event": "messages.update",
+    "instance": "Chris_whats",
+    "data": {
+        "messageId": "cm6kt3r3e003nzkmn2sv5j3i3",
+        "keyId": "3F43CA662A7559E3F317",
+        "remoteJid": "5519993483180:13@s.whatsapp.net",
+        "fromMe": true,
+        "participant": "5519993483180:13@s.whatsapp.net",
+        "status": "DELIVERY_ACK",
+        "instanceId": "7dd4baf8-5b22-4cef-a780-637838a6e495"
+    },
+    "destination": "http://host.docker.internal:8000/api/webhook/evolution",
+    "date_time": "2025-01-31T10:35:11.689Z",
+    "sender": "554184191656@s.whatsapp.net",
+    "server_url": "http://smcit-evolution-api.com",
+    "apikey": "E01A34877307-4513-8EB0-F741ABB361CC"
+}

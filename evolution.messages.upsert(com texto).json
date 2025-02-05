@@ -1,0 +1,27 @@
+{
+    "data": {
+        "key": {
+            "id": "3F175BE4C2647E764EC5",
+            "fromMe": true,
+            "remoteJid": "554184191656@s.whatsapp.net"
+        },
+        "source": "unknown",
+        "message": { "conversation": "AraucarIA tudo certo?" },
+        "pushName": "Klein",
+        "instanceId": "7dd4baf8-5b22-4cef-a780-637838a6e495",
+        "contextInfo": {
+            "expiration": 0,
+            "disappearingMode": { "initiator": "CHANGED_IN_CHAT" },
+            "ephemeralSettingTimestamp": "0"
+        },
+        "messageType": "conversation",
+        "messageTimestamp": 1738609040
+    },
+    "event": "messages.upsert",
+    "apikey": "E01A34877307-4513-8EB0-F741ABB361CC",
+    "sender": "554184191656@s.whatsapp.net",
+    "instance": "Chris_whats",
+    "date_time": "2025-02-03T15:57:20.434Z",
+    "server_url": "http://smcit-evolution-api.com",
+    "destination": "http://host.docker.internal:8000/api/webhook/evolution"
+}
