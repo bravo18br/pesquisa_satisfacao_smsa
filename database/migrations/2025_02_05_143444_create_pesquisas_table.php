@@ -17,10 +17,10 @@ return new class extends Migration
             $table->string('unidade')->nullable();
             $table->string('status_pesquisa'); // job não iniciado, job iniciado, primeiro contato, aguardando, encerrada
             $table->tinyInteger('atendimento_recepcao')->nullable();
-            $table->tinyInteger('realizacao_exame')->nullable();
-            $table->tinyInteger('atendimento_medico')->nullable();
             $table->tinyInteger('ambiente_limpeza')->nullable();
             $table->string('pontualidade_exame')->nullable();
+            $table->tinyInteger('realizacao_exame')->nullable();
+            $table->tinyInteger('atendimento_medico')->nullable();
             $table->tinyInteger('avaliacao_geral')->nullable();
             $table->text('avaliacao_livre')->nullable();
             $table->timestamps();

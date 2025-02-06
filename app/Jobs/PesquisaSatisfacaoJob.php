@@ -2,13 +2,15 @@
 
 namespace App\Jobs;
 
-use App\Models\Pesquisa;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Http\Controllers\EvolutionController;
+use App\Http\Controllers\BotsController;
+use App\Models\Pesquisa;
+use App\Models\EvolutionEvent;
 
 class EnviarPesquisaJob implements ShouldQueue
 {
@@ -33,18 +35,19 @@ class EnviarPesquisaJob implements ShouldQueue
                     $this->jobIniciado();
                 break;
                 case 'primeiro contato':
-                    // procurar resposta no db (DESENVOLVER)
-                    // CONFERIR A ULTIMA ATUALIZAÇÃO, PARA SABER QUANTO TEMPO ESTÁ ESPERANDO
-                    
+                    $this->primeiroContato();
                 break;
+                case 'lgpd autorizado':
+                    $this->segundoContato();
+                break;    
+                case 'unidade':
+                    $this->terceiroContato();
+                break;                              
             }
+            sleep(60);
+            $this->contato->refresh();
         }
 
-        // // Finaliza a pesquisa
-        // $this->contato->update([
-        //     'telefone' => null,
-        //     'status_pesquisa' => 'encerrada',
-        // ]);
     }
 
     private function jobIniciado()
@@ -53,9 +56,9 @@ class EnviarPesquisaJob implements ShouldQueue
         $numero = $this->contato->telefone;
         $numeroWhats = $this->formatarNumeroWhatsApp($numero);
         $mensagem = "Olá! Eu sou Carlos, quero saber a sua opinião sobre o seu atendimento médico em Araucária hoje.\n"
-            . "Eu sou uma inteligência artificial e suas respostas são totalmente anônimas, pode ficar tranquilo.\n"
+            . "Eu sou uma inteligência artificial e suas respostas são totalmente anônimas.\n"
             . "Usarei essas informações apenas para melhorar os serviços de saúde na cidade.\n"
-            . "Podemos iniciar a pesquisa? Responda \"sim\" ou \"não participar\"";
+            . "Podemos iniciar a pesquisa? Responda \"sim\" ou \"não\"";
 
         $evolution = new EvolutionController();
         $status_envio = $evolution->enviaWhats($numeroWhats, $mensagem);
@@ -64,6 +67,104 @@ class EnviarPesquisaJob implements ShouldQueue
             $this->contato->update(['status_pesquisa' => 'primeiro contato']);
         }
     }
+
+    private function primeiroContato()
+    {
+        // NESSA FUNCTION, ELE VAI RECEBER A RESPOSTA SE O USUÁRIO ACEITOU OU NÃO PARTICIPAR DA PESQUISA
+        // NA SEQUÊNCIA, VAI PERGUNTAR O NOME DA UNIDADE QUE ELE FOI ATENDIDO
+
+        $numero = $this->contato->telefone;
+        $numeroWhats = $this->formatarNumeroWhatsApp($numero);
+
+        // Buscar todas as mensagens do usuário
+        $mensagensQuery = EvolutionEvent::whereRaw("data->'data'->'key'->>'remoteJid' = ?", [$numeroWhats]);
+        $mensagens = $mensagensQuery->pluck("data->'data'->'message'->>'conversation'");
+        $historicoMensagens = $mensagens->implode("\n");
+    
+        // Apagar as mensagens do banco para evitar reprocessamento
+        $mensagensQuery->delete();
+    
+        // Processar as mensagens
+        $bot = new BotsController();
+        $resposta = $bot->botPrimeiroContato($historicoMensagens);
+
+        if ($resposta === 'sim'){
+            $this->contato->update(['status_pesquisa' => 'lgpd autorizado']);
+            $mensagem = "Que bom que aceitou participar!\n"
+                . "Vou iniciar a primeira pergunta então:\n"
+                . "Qual o nome da unidade de atendimento médico que você esteve hoje?";
+    
+            $evolution = new EvolutionController();
+            $evolution->enviaWhats($numeroWhats, $mensagem);
+        } else {
+            $this->contato->update(['status_pesquisa' => 'encerrada']);
+            $mensagem = "Está sem tempo para responder agora?\n"
+                . "Sem problemas, deixamos para uma próxima oportunidade!\n"
+                . "Agradeço pela atenção!";
+    
+            $evolution = new EvolutionController();
+            $evolution->enviaWhats($numeroWhats, $mensagem);
+        }
+    }
+
+    private function segundoContato()
+    {
+        // NESSA FUNCTION, ELE VAI RECEBER A RESPOSTA SOBRE QUAL UNIDADE MÉDICA ELE FOI ATENDIDO
+        // NA SEQUÊNCIA, VAI PERGUNTAR A OPINIÃO SOBRE A RECEPÇÃO DA UNIDADE
+
+        $numero = $this->contato->telefone;
+        $numeroWhats = $this->formatarNumeroWhatsApp($numero);
+
+        // Buscar todas as mensagens do usuário
+        $mensagensQuery = EvolutionEvent::whereRaw("data->'data'->'key'->>'remoteJid' = ?", [$numeroWhats]);
+        $mensagens = $mensagensQuery->pluck("data->'data'->'message'->>'conversation'");
+        $historicoMensagens = $mensagens->implode("\n");
+    
+        // Apagar as mensagens do banco para evitar reprocessamento
+        $mensagensQuery->delete();
+
+        // Processar as mensagens
+        $bot = new BotsController();
+        $resposta = $bot->botSegundoContato($historicoMensagens);
+
+        $this->contato->update(['unidade' => $resposta]);
+        $this->contato->update(['status_pesquisa' => 'unidade']);
+        $mensagem = "Ok, anotado.\n"
+            . "Agora, o que você achou da recepção da unidade?\n"
+            . "Você foi bem instruído ao chegar e ao sair do local?";
+
+        $evolution = new EvolutionController();
+        $evolution->enviaWhats($numeroWhats, $mensagem);        
+    }
+
+    private function terceiroContato()
+    {
+        // NESSA FUNCTION, ELE VAI RECEBER A RESPOSTA SOBRE O QUE ELE ACHOU DA RECEPÇÃO DA UNIDADE
+        // NA SEQUÊNCIA, VAI PERGUNTAR A OPINIÃO SOBRE A CONSERVAÇÃO E LIMPEZA DA UNIDADE
+
+        $numero = $this->contato->telefone;
+        $numeroWhats = $this->formatarNumeroWhatsApp($numero);
+
+        // Buscar todas as mensagens do usuário
+        $mensagensQuery = EvolutionEvent::whereRaw("data->'data'->'key'->>'remoteJid' = ?", [$numeroWhats]);
+        $mensagens = $mensagensQuery->pluck("data->'data'->'message'->>'conversation'");
+        $historicoMensagens = $mensagens->implode("\n");
+    
+        // Apagar as mensagens do banco para evitar reprocessamento
+        $mensagensQuery->delete();
+
+        // Processar as mensagens
+        $bot = new BotsController();
+        $resposta = $bot->botTerceiroContato($historicoMensagens);
+
+        $this->contato->update(['atendimento_recepcao' => $resposta]);
+        $this->contato->update(['status_pesquisa' => 'recepção']);
+        $mensagem = "Ok, já anotei aqui.\n"
+            . "E sobre a limpeza e conservação do local? Os banheiros e corredores, estavam em ordem?";
+
+        $evolution = new EvolutionController();
+        $evolution->enviaWhats($numeroWhats, $mensagem);        
+    }    
 
     private function formatarNumeroWhatsApp(string $numero): string
     {

@@ -12,7 +12,7 @@ class EvolutionEventController extends Controller
     {
         try {
             $data = $request->all();
-            if ($data!=[]){
+            if ($data!=[] && $data['event']==='messages.upsert'){
                 EvolutionEvent::create([
                     'data' => $data
                 ]); 

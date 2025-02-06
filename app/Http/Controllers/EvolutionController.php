@@ -24,7 +24,6 @@ class EvolutionController extends Controller
   
     public function verificaMensagens()
     {
-        // Busca uma única mensagem contendo "AraucarIA"
         $mensagem = EvolutionEvent::whereRaw("data->'data'->'message'->>'conversation' LIKE ?", ['%Ollama%'])->first();
         // $mensagem = EvolutionEvent::first();
     

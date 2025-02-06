@@ -172,4 +172,72 @@ class BotsController extends Controller
         return $resultados;
     }
     
+    public function botPrimeiroContato($prompt)
+    {
+        $contexto = 'Você perguntou para o usuário se ele aceita ou não participar de uma pesquisa de satisfação.';
+        $resposta = $prompt;
+        $formatoResposta = 'De acordo com a resposta do usuário, responda "sim" se ele aceitou participar da pesquisa, ou "não" caso não tenha aceitado.';
+
+        $params = [
+            "model" => "llama3.2",
+            "prompt" => $contexto.' Resposta do usuário: <'.$resposta.'> '. $formatoResposta,
+            "stream" => false,    
+            // "max_length" => 100,     
+            "options" => [
+                "temperature" => 0.4,
+                "top_p" => 1
+            ]            
+        ];
+
+        $ollama = new OllamaController();
+        $response = $ollama->promptOllama($params);
+        $responseData = $response->getData(true);
+        return $responseData['response'];
+    }
+
+    public function botSegundoContato($prompt)
+    {
+        $contexto = 'Você perguntou para o usuário qual unidade de atendimento médico ele esteve hoje.';
+        $resposta = $prompt;
+        $formatoResposta = 'De acordo com a resposta do usuário, qual o nome da unidade de atendimento médico?';
+
+        $params = [
+            "model" => "llama3.2",
+            "prompt" => $contexto.' Resposta do usuário: <'.$resposta.'> '. $formatoResposta,
+            "stream" => false,    
+            // "max_length" => 100,     
+            "options" => [
+                "temperature" => 0.4,
+                "top_p" => 1
+            ]            
+        ];
+
+        $ollama = new OllamaController();
+        $response = $ollama->promptOllama($params);
+        $responseData = $response->getData(true);
+        return $responseData['response'];
+    }
+
+    public function botTerceiroContato($prompt)
+    {
+        $contexto = 'Você perguntou para o usuário o que ele achou da limpeza e conservação do local, se os banheiros e corredores estavam em ordem.';
+        $resposta = $prompt;
+        $formatoResposta = 'De acordo com a resposta do usuário, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não da limpeza e conservação do local.';
+
+        $params = [
+            "model" => "llama3.2",
+            "prompt" => $contexto.' Resposta do usuário: <'.$resposta.'> '. $formatoResposta,
+            "stream" => false,    
+            // "max_length" => 100,     
+            "options" => [
+                "temperature" => 0.4,
+                "top_p" => 1
+            ]            
+        ];
+
+        $ollama = new OllamaController();
+        $response = $ollama->promptOllama($params);
+        $responseData = $response->getData(true);
+        return $responseData['response'];
+    }
 }
