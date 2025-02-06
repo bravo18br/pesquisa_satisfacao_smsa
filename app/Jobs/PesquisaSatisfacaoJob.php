@@ -42,7 +42,13 @@ class EnviarPesquisaJob implements ShouldQueue
                 break;    
                 case 'unidade':
                     $this->terceiroContato();
-                break;                              
+                break;    
+                case 'recepcao':
+                    $this->quartoContato();
+                break;    
+                case 'recepcao':
+                    $this->quartoContato();
+                break;                                                          
             }
             sleep(60);
             $this->contato->refresh();
@@ -109,9 +115,6 @@ class EnviarPesquisaJob implements ShouldQueue
 
     private function segundoContato()
     {
-        // NESSA FUNCTION, ELE VAI RECEBER A RESPOSTA SOBRE QUAL UNIDADE MÉDICA ELE FOI ATENDIDO
-        // NA SEQUÊNCIA, VAI PERGUNTAR A OPINIÃO SOBRE A RECEPÇÃO DA UNIDADE
-
         $numero = $this->contato->telefone;
         $numeroWhats = $this->formatarNumeroWhatsApp($numero);
 
@@ -123,12 +126,13 @@ class EnviarPesquisaJob implements ShouldQueue
         // Apagar as mensagens do banco para evitar reprocessamento
         $mensagensQuery->delete();
 
-        // Processar as mensagens
+        // ESSE BOT PROCESSA A RESPOSTA SOBRE QUAL UNIDADE MÉDICA ELE FOI ATENDIDO
         $bot = new BotsController();
         $resposta = $bot->botSegundoContato($historicoMensagens);
-
         $this->contato->update(['unidade' => $resposta]);
         $this->contato->update(['status_pesquisa' => 'unidade']);
+
+        // NA SEQUÊNCIA, VAI PERGUNTAR A OPINIÃO SOBRE A RECEPÇÃO DA UNIDADE
         $mensagem = "Ok, anotado.\n"
             . "Agora, o que você achou da recepção da unidade?\n"
             . "Você foi bem instruído ao chegar e ao sair do local?";
@@ -139,9 +143,6 @@ class EnviarPesquisaJob implements ShouldQueue
 
     private function terceiroContato()
     {
-        // NESSA FUNCTION, ELE VAI RECEBER A RESPOSTA SOBRE O QUE ELE ACHOU DA RECEPÇÃO DA UNIDADE
-        // NA SEQUÊNCIA, VAI PERGUNTAR A OPINIÃO SOBRE A CONSERVAÇÃO E LIMPEZA DA UNIDADE
-
         $numero = $this->contato->telefone;
         $numeroWhats = $this->formatarNumeroWhatsApp($numero);
 
@@ -153,18 +154,46 @@ class EnviarPesquisaJob implements ShouldQueue
         // Apagar as mensagens do banco para evitar reprocessamento
         $mensagensQuery->delete();
 
-        // Processar as mensagens
+        // ESSE BOT RESPONDE SOBRE O QUE ELE ACHOU DA RECEPÇÃO DA UNIDADE
         $bot = new BotsController();
-        $resposta = $bot->botTerceiroContato($historicoMensagens);
-
+        $resposta = $bot->botTerceiroContato($historicoMensagens); 
         $this->contato->update(['atendimento_recepcao' => $resposta]);
-        $this->contato->update(['status_pesquisa' => 'recepção']);
+        $this->contato->update(['status_pesquisa' => 'recepcao']);
+
+        // NA SEQUÊNCIA, VAI PERGUNTAR A OPINIÃO SOBRE A CONSERVAÇÃO E LIMPEZA DA UNIDADE
         $mensagem = "Ok, já anotei aqui.\n"
             . "E sobre a limpeza e conservação do local? Os banheiros e corredores, estavam em ordem?";
 
         $evolution = new EvolutionController();
         $evolution->enviaWhats($numeroWhats, $mensagem);        
     }    
+
+    private function quartoContato()
+    {
+        $numero = $this->contato->telefone;
+        $numeroWhats = $this->formatarNumeroWhatsApp($numero);
+
+        // Buscar todas as mensagens do usuário
+        $mensagensQuery = EvolutionEvent::whereRaw("data->'data'->'key'->>'remoteJid' = ?", [$numeroWhats]);
+        $mensagens = $mensagensQuery->pluck("data->'data'->'message'->>'conversation'");
+        $historicoMensagens = $mensagens->implode("\n");
+    
+        // Apagar as mensagens do banco para evitar reprocessamento
+        $mensagensQuery->delete();
+
+        // ESSE BOT RESPONDE SOBRE A CONSERVAÇÃO E LIMPEZA DA UNIDADE
+        $bot = new BotsController();
+        $resposta = $bot->botQuartoContato($historicoMensagens); 
+        $this->contato->update(['ambiente_limpeza' => $resposta]);
+        $this->contato->update(['status_pesquisa' => 'limpeza']);
+
+        // NA SEQUÊNCIA, VAI PERGUNTAR A OPINIÃO SOBRE A CONSERVAÇÃO E LIMPEZA DA UNIDADE
+        $mensagem = "Ok, já anotei aqui.\n"
+            . "E sobre a limpeza e conservação do local? Os banheiros e corredores, estavam em ordem?";
+
+        $evolution = new EvolutionController();
+        $evolution->enviaWhats($numeroWhats, $mensagem);        
+    }   
 
     private function formatarNumeroWhatsApp(string $numero): string
     {

@@ -6,145 +6,25 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\OllamaController;
+use App\Models\Bot;
 
 class BotsController extends Controller
 {
-    public function promptBot1($phone, $prompt, $pushName, $temperature, $top_p)
+    public function promptBot($prompt, $bot_nome)
     {
-        // Esse é o bot de recepção de novos chamados. Atende o primeiro contato.
-
-        $contexto = 'Você é Ollama, um assistente de IA da Prefeitura de Araucaria e está atendendo o cidadao '. $pushName;
-        $pergunta = $prompt;
-        $formatoResposta = ' Resposta gentil e curta, em pt-br.';
-
+        $bot = Bot::where('nome'=== $bot_nome)->first();
         $params = [
-            "model" => "llama3.2",
-            "prompt" => 'Contexto: '.$contexto.'. Leve em conta o contexto informado: '.$pergunta. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
+            "model" => $bot->model,
+            "prompt" => $bot->contexto .' Prompt: <'.$prompt.'> '. $bot->formato_resposta,
+            "stream" => $bot->stream,    
+            "max_length" => $bot->max_length,     
             "options" => [
-                "temperature" => $temperature ?? 0.5,
-                "top_p" => $top_p ?? 0.5
+                "temperature" => $bot->temperatura,
+                "top_p" => $bot->top_p
             ]            
         ];
-
         $ollama = new OllamaController();
         $response = $ollama->promptOllama($params);
-    }
-    
-    public function botResumeProblema($phone, $prompt, $pushName, $temperature, $top_p)
-    {
-        $contexto = 'Recebi essa mensagem de um usuário e preciso de um resumo do problema. Não informar endereço no resumo. Não informar documentos no resumo.';
-        $problema = $prompt;
-        $formatoResposta = 'Responda apenas uma frase, em pt-br. Comece com "O usuário solicita <resumo da mensagem>"';
-
-        $params = [
-            "model" => "llama3.2",
-            "prompt" => $contexto.' Mensagem: <'.$problema.'> '. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
-            "options" => [
-                "temperature" => $temperature ?? 0.4,
-                "top_p" => $top_p ?? 1
-            ]            
-        ];
-
-        $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = $response->getData(true);
-        return $responseData['response'];
-    }
-
-    public function botIdentificaSecretaria($phone, $prompt, $pushName, $temperature, $top_p)
-    {
-        $contexto = 'Você é assistente da prefeitura e deve classificar mensagens, de acordo com a secretaria responsavel. As secretarias disponíveis são: SMAD Administração, SMAG Agricultura, SMAS Assistência Social, SMCS Comunicação Social, Controladoria, SMCT Cultura e Turismo, SMED Educação, SMEL Esporte e Lazer, SMFI Finanças, SMGP Gestão de Pessoas, SMGO Governo, SMMA Meio Ambiente, SMOP Obras e Transporte, SMPL Planejamento, SMPP Políticas Públicas, PGM Procuradoria, SMSA Saúde, SMSP Segurança Pública, SMTE Trabalho e Emprego, SMUR Urbanismo, SMCIT Ciência Inovação e Tecnologia';
-        $problema = $prompt;
-        $formatoResposta = ' Responda apenas o nome da secretaria, sem ponto, nada mais, em pt-br.';
-
-        $params = [
-            "model" => "llama3.2",
-            "prompt" => 'Contexto: '.$contexto.'. Mensagem: '.$problema. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
-            "options" => [
-                "temperature" => $temperature ?? 0.9,
-                "top_p" => $top_p ?? 0.9
-            ]            
-        ];
-
-        $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = $response->getData(true);
-        return $responseData['response'];
-    }
-
-    public function botAnaliseDeSentimento($phone, $prompt, $pushName, $temperature, $top_p)
-    {
-        $contexto = 'Você deve analisar o sentimento do usuário que enviou a mensagem. As opções permitidas são: Satisfeito, Irritado, Triste, Entusiasmado ou Neutro';
-        $mensagem = $prompt;
-        $formatoResposta = ' Responda apenas o sentimento do usuário, sem ponto, nada mais, em pt-br.';
-
-        $params = [
-            "model" => "llama3.2",
-            "prompt" => 'Contexto: '.$contexto.'. Mensagem: '.$mensagem. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
-            "options" => [
-                "temperature" => $temperature ?? 0.5,
-                "top_p" => $top_p ?? 0.5
-            ]            
-        ];
-
-        $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = $response->getData(true);
-        return $responseData['response'];
-    }
-
-    public function botAnaliseTipoMensagem($phone, $prompt, $pushName, $temperature, $top_p)
-    {
-        $contexto = 'Você deve classificar a mensagem. As classificações permitidas são: Dúvida, Reclamação, Sugestão, Elogio ou Outro';
-        $mensagem = $prompt;
-        $formatoResposta = ' Responda apenas a classificação da mensagem, sem ponto, nada mais, em pt-br.';
-
-        $params = [
-            "model" => "llama3.2",
-            "prompt" => 'Contexto: '.$contexto.'. Mensagem: '.$mensagem. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
-            "options" => [
-                "temperature" => $temperature ?? 0.5,
-                "top_p" => $top_p ?? 0.5
-            ]            
-        ];
-
-        $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = $response->getData(true);
-        return $responseData['response'];
-    }
-
-    public function botDetectaEndereco($phone, $prompt, $pushName, $temperature, $top_p)
-    {
-        $contexto = 'A seguinte mensagem contém um relato de problema seguido de um endereço. Extraia apenas o endereço da mensagem, sem incluir informações adicionais';
-        $mensagem = $prompt;
-        $formatoResposta = ' Responda apenas o endereço encontrado. Caso não encontre, responda "Não encontrado", sem ponto, nada mais, em pt-br.';
-
-        $params = [
-            "model" => "llama3.2",
-            "prompt" => $contexto.'. Mensagem: <'.$mensagem.'> '. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
-            "options" => [
-                "temperature" => $temperature ?? 0.5,
-                "top_p" => $top_p ?? 0.5
-            ]            
-        ];
-
-        $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = $response->getData(true);
-        return $responseData['response'];
     }
 
     public function testarParametros($phone, $prompt, $pushName) 
@@ -172,72 +52,4 @@ class BotsController extends Controller
         return $resultados;
     }
     
-    public function botPrimeiroContato($prompt)
-    {
-        $contexto = 'Você perguntou para o usuário se ele aceita ou não participar de uma pesquisa de satisfação.';
-        $resposta = $prompt;
-        $formatoResposta = 'De acordo com a resposta do usuário, responda "sim" se ele aceitou participar da pesquisa, ou "não" caso não tenha aceitado.';
-
-        $params = [
-            "model" => "llama3.2",
-            "prompt" => $contexto.' Resposta do usuário: <'.$resposta.'> '. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
-            "options" => [
-                "temperature" => 0.4,
-                "top_p" => 1
-            ]            
-        ];
-
-        $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = $response->getData(true);
-        return $responseData['response'];
-    }
-
-    public function botSegundoContato($prompt)
-    {
-        $contexto = 'Você perguntou para o usuário qual unidade de atendimento médico ele esteve hoje.';
-        $resposta = $prompt;
-        $formatoResposta = 'De acordo com a resposta do usuário, qual o nome da unidade de atendimento médico?';
-
-        $params = [
-            "model" => "llama3.2",
-            "prompt" => $contexto.' Resposta do usuário: <'.$resposta.'> '. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
-            "options" => [
-                "temperature" => 0.4,
-                "top_p" => 1
-            ]            
-        ];
-
-        $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = $response->getData(true);
-        return $responseData['response'];
-    }
-
-    public function botTerceiroContato($prompt)
-    {
-        $contexto = 'Você perguntou para o usuário o que ele achou da limpeza e conservação do local, se os banheiros e corredores estavam em ordem.';
-        $resposta = $prompt;
-        $formatoResposta = 'De acordo com a resposta do usuário, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não da limpeza e conservação do local.';
-
-        $params = [
-            "model" => "llama3.2",
-            "prompt" => $contexto.' Resposta do usuário: <'.$resposta.'> '. $formatoResposta,
-            "stream" => false,    
-            // "max_length" => 100,     
-            "options" => [
-                "temperature" => 0.4,
-                "top_p" => 1
-            ]            
-        ];
-
-        $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = $response->getData(true);
-        return $responseData['response'];
-    }
 }
