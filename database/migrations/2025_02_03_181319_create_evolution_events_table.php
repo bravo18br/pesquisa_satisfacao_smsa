@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('evolution_events', function (Blueprint $table) {
             $table->id();
-            $table->string('instance'); // Nome da instância
-            $table->string('event'); // Tipo do evento
+            // $table->string('instance'); // Nome da instância
+            // $table->string('event'); // Tipo do evento
             $table->jsonb('data'); // JSON com os dados do evento
             $table->timestamps();
             $table->softDeletes(); // Adiciona coluna deleted_at para SoftDeletes

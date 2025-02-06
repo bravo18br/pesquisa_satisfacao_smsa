@@ -31,6 +31,7 @@ class BotsController extends Controller
         $ollama = new OllamaController();
         $response = $ollama->promptOllama($params);
     }
+    
     public function botResumeProblema($phone, $prompt, $pushName, $temperature, $top_p)
     {
         $contexto = 'Recebi essa mensagem de um usuário e preciso de um resumo do problema. Não informar endereço no resumo. Não informar documentos no resumo.';

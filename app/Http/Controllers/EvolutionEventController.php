@@ -12,23 +12,17 @@ class EvolutionEventController extends Controller
     {
         try {
             $data = $request->all();
-            $event = $data['event'];
-
-            if ($event == "messages.upsert") {
-                $message = strtolower($data['data']['message']['conversation'] ?? '');
-                if(str_contains($message, 'ollama')) {
-                    EvolutionEvent::create([
-                        'event' => $data['event'] ?? 'unknown',
-                        'instance' => $data['instance'] ?? 'unknown',
-                        'data' => $data
-                    ]);
-                    // log::info('Evento salvo com sucesso!');
-                    return response()->json(['message' => 'Evento salvo com sucesso!'], 201);
-                }
+            if ($data!=[]){
+                EvolutionEvent::create([
+                    'data' => $data
+                ]); 
+                return response()->json(['message' => 'Evento salvo com sucesso!'], 201);
+            }else{
+                return response()->json(['message' => 'Evento ignorado.'], 200);
             }
-            return response()->json(['message' => 'Evento ignorado.'], 200);
         } catch (\Exception $e) {
             log::error('Evento não salvo. Erro: ' . $e->getMessage());
+            log::error('Data: ' . $data);
             return response()->json(['error' => 'Erro ao processar evento', 'details' => $e->getMessage()], 500);
         }
     }

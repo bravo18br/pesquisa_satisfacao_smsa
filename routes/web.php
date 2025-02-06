@@ -1,12 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\OllamaController;
-use App\Http\Controllers\EmbeddingController;
-use App\Http\Controllers\EvolutionController;
+use App\Http\Controllers\PesquisaController;
+use App\Http\Controllers\EvolutionEventController;
 
-// Route::get('/', [EmbeddingController::class, 'createEmbeddings']);
-// Route::get('/generate', [OllamaController::class, 'generate']);
-
-
-Route::get('/evolution/testResposta', [EvolutionController::class, 'verificaMensagens']);

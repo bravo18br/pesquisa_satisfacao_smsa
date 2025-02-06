@@ -69,10 +69,10 @@ class EvolutionController extends Controller
         // }
     }  
     
-    private function enviaWhats($phone, $mensagem) {
+    public function enviaWhats($phone, $mensagem) {
         $payload = [
             'number' => $phone,
-            'text' => json_encode($mensagem),
+            'text' => $mensagem,
             'delay' => 1,
             'linkPreview' => false,
             'mentionsEveryOne' => false

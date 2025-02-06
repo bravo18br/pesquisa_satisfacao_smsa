@@ -1,10 +1,16 @@
 # Pesquisa de Satisfação Automatizada via WhatsApp
 
+## Visão Geral
+Este projeto tem como objetivo a implementação de uma **pesquisa de satisfação automatizada** para todos os pacientes da **Rede de Atenção à Saúde de Araucária** e serviços credenciados (hospitais, clínicas, laboratórios). O objetivo é avaliar a qualidade dos serviços prestados através de um sistema integrado com o **WhatsApp**, permitindo uma comunicação rápida e eficiente com os pacientes. No futuro, a pesquisa pode ser ampliada para TOTENS nas próprias unidades.
+
 ## GLPI Associado
 Esse projeto está em desenvolvimento por políticas da atual gestão que foca no uso de IA para melhorar a vida dos cidadãos. Também é uma solicitação da SMSA, registrada no GLPI 78039
 
-## Visão Geral
-Este projeto tem como objetivo a implementação de uma **pesquisa de satisfação automatizada** para todos os pacientes da **Rede de Atenção à Saúde de Araucária** e serviços credenciados (hospitais, clínicas, laboratórios). O objetivo é avaliar a qualidade dos serviços prestados através de um sistema integrado com o **WhatsApp**, permitindo uma comunicação rápida e eficiente com os pacientes.
+## LGPD
+A primeira pergunta da pesquisa de satisfação é sobre o concentimento no fornecimento dos dados. Contudo, entendo que isso pode ser dispensado, pois o artigo 23 da LGPD (Lei 13.709/2018) reforça que órgãos públicos podem tratar dados para a execução de políticas públicas e que esses dados podem ser compartilhados entre órgãos, desde que garantam segurança e sigilo e preferencialmente anonimizados. Uma mensagem inicial clara para o usuário, é recomendada. EX: "Esta pesquisa faz parte de uma iniciativa da Prefeitura de Araucária para avaliar e aprimorar os serviços de saúde pública, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018, art. 7º, III e VIII)."
+
+## Requisitos
+Precisamos de um trigger acionado pelo IPM para iniciar a pesquisa de satisfação. Em contato com a IPM, já existe uma pesquisa de satisfação ativada por email e uma por SMS. Em conversa informal, não existe possibilidade de acionar um trigger com o telefone de contato e nome da unidade. Vai ter que ser negociado esse trigger. Pode ser um webhook, API, um email para um destinatário específico, tanto faz, desde que a gente 
 
 ## Tecnologias Utilizadas
 - **Evolution API**: Para o envio e recebimento de mensagens via WhatsApp.
@@ -63,6 +69,9 @@ Este projeto tem como objetivo a implementação de uma **pesquisa de satisfaç�
      - 3 - Neutro
      - 2 - Insatisfeito
      - 1 - Extremamente insatisfeito
+
+7. **Observação Livre**     
+   - Agora, escrevendo com as suas palavras, quer fazer algum elogio, sugestão ou reclamação? Sinta-se a vontade, pode escrever!
 
 ## Instalação e Configuração
 1. Clone este repositório:
