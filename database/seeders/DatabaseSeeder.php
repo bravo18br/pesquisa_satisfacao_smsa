@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Bot;
+use App\Models\PerguntaPesquisa;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -128,6 +129,41 @@ class DatabaseSeeder extends Seeder
 
         foreach ($bots as $bot) {
             Bot::create($bot);
+        }
+
+        $perguntas = [
+            [
+                'nome' => 'autorizacaoLGPD',
+                'mensagem' => "Olá! Eu sou Carlos, quero saber a sua opinião sobre o seu atendimento médico em Araucária hoje.\n"
+                    . "Eu sou uma inteligência artificial e suas respostas são totalmente anônimas.\n"
+                    . "Usarei essas informações apenas para melhorar os serviços de saúde na cidade.\n"
+                    . "Podemos iniciar a pesquisa? Responda \"sim\" ou \"não\"",
+            ],
+            [
+                'nome' => 'nomeUnidadeSaude',
+                'mensagem' => "Que bom que aceitou participar!\n"
+                    . "Vou iniciar a primeira pergunta então:\n"
+                    . "Qual o nome da unidade de atendimento médico que você esteve hoje?",
+            ],   
+            [
+                'nome' => 'lgpdNegado',
+                'mensagem' => "Está sem tempo para responder agora?\n"
+                    . "Sem problemas, deixamos para uma próxima oportunidade!\n"
+                    . "Agradeço pela atenção!",
+            ], 
+            [
+                'nome' => 'recepcaoUnidade',
+                'mensagem' => "Agora, o que você achou da recepção da unidade?\n"
+                    . "Você foi bem instruído ao chegar e ao sair do local?",
+            ], 
+            [
+                'nome' => 'limpezaUnidade',
+                'mensagem' => "E sobre a limpeza e conservação do local? Os banheiros e corredores, estavam em ordem?",
+            ],                                                
+        ];
+
+        foreach ($perguntas as $pergunta) {
+            PerguntaPesquisa::create($pergunta);
         }
     }
 }
