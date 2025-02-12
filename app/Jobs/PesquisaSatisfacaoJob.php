@@ -20,6 +20,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $numeroWhats;
+    protected $tentativasMaximas = 10; // 🔹 Evita loop infinito
 
     public function __construct($numeroWhats)
     {
@@ -32,47 +33,59 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return;
         }
 
-        // Recupera as respostas já registradas para este número
+        // 🔹 Recupera pesquisa associada ao número
         $pesquisa = ProcessadaPesquisa::where('numeroWhats', $this->numeroWhats)->first();
 
         if (!$pesquisa) {
             return;
         }
 
-        $respostas = [
-            'numeroWhats' => $pesquisa->numeroWhats,
-            'autorizacaoLGPD' => $pesquisa->autorizacaoLGPD,
-            'nomeUnidadeSaude' => $pesquisa->nomeUnidadeSaude,
-            'recepcaoUnidade' => $pesquisa->recepcaoUnidade,
-            'limpezaUnidade' => $pesquisa->limpezaUnidade,
-            'medicoQualidade' => $pesquisa->medicoQualidade,
-            'exameQualidade' => $pesquisa->exameQualidade,
-            'tempoAtendimento' => $pesquisa->tempoAtendimento,
-            'comentarioLivre' => $pesquisa->comentarioLivre,
-        ];
+        // 🔹 Verifica se já atingiu o limite de tentativas
+        if ($this->attempts() > $this->tentativasMaximas) {
+            // 🔹 Se o usuário não responder por um período de tempo, a pesquisa é encerrada
+            $encerramento = PerguntaPesquisa::where('pesquisa', 'smsa')
+                ->where('nome', 'semInteracao')
+                ->first();
 
-        while ($respostas['autorizacaoLGPD'] === null) {
+            if ($encerramento) {
+                $evolution = new EvolutionController();
+                $evolution->enviaWhats($this->numeroWhats, $encerramento->mensagem);
+            }
+            $this->fail("Número {$this->numeroWhats} atingiu o limite de tentativas."); // Marca como falha e para o job
+            $pesquisa->autorizacaoLGPD = 'não';
+            $pesquisa->numeroWhats = null;
+            $pesquisa->save();
+            return;
+        }
+
+        while ($pesquisa->autorizacaoLGPD === null) {
             $mensagensAlvo = EvolutionEvent::where('fromMe', false)
                 ->where('remoteJid', $this->numeroWhats)
                 ->pluck('conversation')
                 ->filter()
                 ->implode(' ');
+
             if ($mensagensAlvo) {
                 $bot = new BotsController();
                 $pesquisa->autorizacaoLGPD = $bot->promptBot($mensagensAlvo, 'lgpdAutorizacaoBOT');
 
                 if ($pesquisa->autorizacaoLGPD != 'sim') {
-                    // significa que o usuário não autorizou a pesquisa. Nesse caso agradecer e encerrar o contato.
+                    // 🔹 Se o usuário não autorizou a pesquisa, envia agradecimento e remove o telefone
                     $agradecimento = PerguntaPesquisa::where('pesquisa', 'smsa')
                         ->where('nome', 'lgpdNegado')
                         ->first();
-                    $agradecimento = $agradecimento['mensagem'];
-                    $evolution = new EvolutionController();
-                    $evolution->enviaWhats($this->numeroWhats, $agradecimento);
+
+                    if ($agradecimento) {
+                        $evolution = new EvolutionController();
+                        $evolution->enviaWhats($this->numeroWhats, $agradecimento->mensagem);
+                    }
+                    $pesquisa->autorizacaoLGPD = 'não';
+                    $pesquisa->numeroWhats = null; // 🔹 Remove o telefone para não tentar enviar novamente
                 }
+
                 $pesquisa->save();
             } else {
-                return $this->release(60);
+                return $this->release(120); // 🔹 Reagenda se não recebeu resposta ainda
             }
         }
     }

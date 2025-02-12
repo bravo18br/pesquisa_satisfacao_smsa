@@ -141,6 +141,12 @@ class DatabaseSeeder extends Seeder
         $perguntas = [
             [
                 'pesquisa' => 'smsa',
+                'nome' => 'semInteracao',
+                'mensagem' => "Não detectei nenhuma resposta já faz algum tempo, estou encerrando a pesquisa.\n"
+                    . "Agradeço sua atenção!",
+            ],
+            [
+                'pesquisa' => 'smsa',
                 'nome' => 'autorizacaoLGPD',
                 'mensagem' => "Olá! Eu sou Carlos, quero saber a sua opinião sobre o seu atendimento médico em Araucária hoje.\n"
                     . "Eu sou uma inteligência artificial e suas respostas são totalmente anônimas.\n"

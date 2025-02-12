@@ -4,9 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Jobs\PesquisaSatisfacaoJob;
-
 use App\Http\Controllers\EvolutionController;
-
 use App\Models\TelefonePesquisa;
 use App\Models\PerguntaPesquisa;
 
@@ -25,21 +23,33 @@ class IniciarPesquisa extends Command
         }
 
         foreach ($contatos as $contato) {
-
-            //Mandar a primeira pergunta, antes de iniciar o job
             $numeroWhats = $this->formatarNumeroWhatsApp($contato['whats']);
 
-            $pergunta = PerguntaPesquisa::where('pesquisa' === 'smsa' || 'nome' === 'autorizacaoLGPD')->first();
-            $pergunta = $pergunta['mensagem'];
+            // 🔹 Corrigido erro na consulta
+            $pergunta = PerguntaPesquisa::where('pesquisa', 'smsa')
+                ->where('nome', 'autorizacaoLGPD')
+                ->first();
+
+            if (!$pergunta) {
+                $this->warn("Nenhuma pergunta encontrada para o número: {$numeroWhats}");
+                continue; // Pula para o próximo contato
+            }
 
             $evolution = new EvolutionController();
 
-            if ($evolution->enviaWhats($numeroWhats, $pergunta)) {
-                $this->info('Criando JOB para: ' . $numeroWhats);
+            if ($evolution->enviaWhats($numeroWhats, $pergunta->mensagem)) {
+                // 🔹 Apaga o contato APÓS confirmação do envio da mensagem
+                $contato->delete();
+                $this->info("Contato removido: {$numeroWhats}");
+
+                // 🔹 Criando job APÓS deletar o contato
                 dispatch(new PesquisaSatisfacaoJob($numeroWhats));
+                $this->info("JOB criado para: {$numeroWhats}");
+            } else {
+                $this->warn("Falha ao enviar mensagem para: {$numeroWhats}");
             }
-            ;
         }
+
         $this->info('Todas as pesquisas foram encaminhadas.');
         return 0;
     }
