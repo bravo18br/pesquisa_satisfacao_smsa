@@ -1,34 +1,27 @@
 {
     "data": {
         "key": {
-            "id": "38A8C75F1CF5AB99631B29AD16D3807C",
-            "fromMe": false,
-            "remoteJid": "554199140686@s.whatsapp.net"
+            "id": "3FA12470EFB087E76C7A",
+            "fromMe": true,
+            "remoteJid": "554196415379@s.whatsapp.net"
         },
-        "source": "android",
-        "message": {
-            "conversation": "Vai ter churrasco aí hoje?",
-            "messageContextInfo": {
-                "messageSecret": "xG4FfSPpaQ38mN6YIjaAB5VKSA+4ggv5dfHddRqfVLQ=",
-                "deviceListMetadata": {
-                    "senderKeyHash": "o3T1m1n8bxRB0A==",
-                    "senderTimestamp": "1738716091",
-                    "recipientKeyHash": "fXDuK/t76mVPzg==",
-                    "recipientTimestamp": "1738170788"
-                },
-                "deviceListMetadataVersion": 2
-            }
-        },
-        "pushName": "Andre",
+        "source": "unknown",
+        "message": { "conversation": "Vamos no japones" },
+        "pushName": "Klein",
         "instanceId": "7dd4baf8-5b22-4cef-a780-637838a6e495",
+        "contextInfo": {
+            "expiration": 0,
+            "disappearingMode": { "initiator": "CHANGED_IN_CHAT" },
+            "ephemeralSettingTimestamp": "0"
+        },
         "messageType": "conversation",
-        "messageTimestamp": 1738785200
+        "messageTimestamp": 1739368713
     },
     "event": "messages.upsert",
     "apikey": "E01A34877307-4513-8EB0-F741ABB361CC",
     "sender": "554184191656@s.whatsapp.net",
     "instance": "Chris_whats",
-    "date_time": "2025-02-05T16:53:20.478Z",
+    "date_time": "2025-02-12T10:58:33.421Z",
     "server_url": "http://smcit-evolution-api.com",
     "destination": "http://host.docker.internal:8000/api/webhook/evolution"
 }

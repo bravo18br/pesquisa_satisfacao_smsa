@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('processada_pesquisas', function (Blueprint $table) {
             $table->id();
+            $table->string('numeroWhats');
             $table->string('autorizacaoLGPD');
             $table->text('nomeUnidadeSaude');
             $table->text('recepcaoUnidade');

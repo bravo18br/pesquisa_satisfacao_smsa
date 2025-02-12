@@ -24,32 +24,32 @@ class BotsController extends Controller
             ]            
         ];
         $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
+        return $ollama->promptOllama($params);
     }
 
-    public function testarParametros($phone, $prompt, $pushName) 
-    {
-        $resultados = [];
+    // public function testarParametros($phone, $prompt, $pushName) 
+    // {
+    //     $resultados = [];
     
-        for ($temperature = 0.0; $temperature <= 1.0; $temperature += 0.1) {
-            for ($top_p = 0.0; $top_p <= 1.0; $top_p += 0.1) {
-                $temperature = round($temperature, 1);
-                $top_p = round($top_p, 1);
+    //     for ($temperature = 0.0; $temperature <= 1.0; $temperature += 0.1) {
+    //         for ($top_p = 0.0; $top_p <= 1.0; $top_p += 0.1) {
+    //             $temperature = round($temperature, 1);
+    //             $top_p = round($top_p, 1);
     
-                $resposta = $this->botAnaliseDeSentimento($phone, $prompt, $pushName, $temperature, $top_p);
+    //             $resposta = $this->botAnaliseDeSentimento($phone, $prompt, $pushName, $temperature, $top_p);
     
-                $resultados[] = [
-                    'temperature' => $temperature,
-                    'top_p' => $top_p,
-                    'resposta' => $resposta
-                ];
+    //             $resultados[] = [
+    //                 'temperature' => $temperature,
+    //                 'top_p' => $top_p,
+    //                 'resposta' => $resposta
+    //             ];
     
-                // Opcional: Log para acompanhar os testes em tempo real
-                Log::info("Teste - Temperature: $temperature, Top_p: $top_p, Resposta: $resposta");
-            }
-        }
+    //             // Opcional: Log para acompanhar os testes em tempo real
+    //             Log::info("Teste - Temperature: $temperature, Top_p: $top_p, Resposta: $resposta");
+    //         }
+    //     }
     
-        return $resultados;
-    }
+    //     return $resultados;
+    // }
     
 }

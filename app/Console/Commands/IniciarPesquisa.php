@@ -3,8 +3,12 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Pesquisa;
-use App\Jobs\EnviarPesquisaJob;
+use App\Jobs\PesquisaSatisfacaoJob;
+
+use App\Http\Controllers\EvolutionController;
+
+use App\Models\TelefonePesquisa;
+use App\Models\PerguntaPesquisa;
 
 class IniciarPesquisa extends Command
 {
@@ -13,38 +17,33 @@ class IniciarPesquisa extends Command
 
     public function handle()
     {
-        $contatos = Pesquisa::whereNotNull('whats')->get();
+        $contatos = TelefonePesquisa::whereNotNull('whats')->get();
 
         if ($contatos->isEmpty()) {
             $this->info('Nenhum contato pendente encontrado.');
-            return Command::SUCCESS;
+            return 0;
         }
 
         foreach ($contatos as $contato) {
 
             //Mandar a primeira pergunta, antes de iniciar o job
-            $numero = $contato['whats'];
-            $numeroWhats = $this->formatarNumeroWhatsApp($numero);
-    
-            $pergunta = PerguntaPesquisa::where('pesquisa'==='smsa' || 'nome'==='autorizacaoLGPD');
+            $numeroWhats = $this->formatarNumeroWhatsApp($contato['whats']);
+
+            $pergunta = PerguntaPesquisa::where('pesquisa' === 'smsa' || 'nome' === 'autorizacaoLGPD')->first();
             $pergunta = $pergunta['mensagem'];
-    
+
             $evolution = new EvolutionController();
 
-            if ($evolution->enviaWhats($numeroWhats, $pergunta)){
+            if ($evolution->enviaWhats($numeroWhats, $pergunta)) {
                 $this->info('Criando JOB para: ' . $numeroWhats);
-    
-                // Atualiza o status antes de disparar o job para evitar concorrência
-                $contato->update(['status_pesquisa' => 'job iniciado']);
-    
-                dispatch(new EnviarPesquisaJob($contato));
-            };
+                dispatch(new PesquisaSatisfacaoJob($numeroWhats));
+            }
+            ;
         }
-
         $this->info('Todas as pesquisas foram encaminhadas.');
-        return Command::SUCCESS;
+        return 0;
     }
-    
+
     private function formatarNumeroWhatsApp(string $numero): string
     {
         $numero = preg_replace('/\D/', '', $numero);

@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
                 'model' => 'llama3.2',
                 'stream' => false,
                 'max_length' => 200,
-            ],              
+            ],
             [
                 'nome' => 'unidadeAtendimentoBOT',
                 'contexto' => 'Você perguntou para o usuário qual unidade de atendimento médico ele esteve hoje.',
@@ -35,7 +35,7 @@ class DatabaseSeeder extends Seeder
                 'model' => 'llama3.2',
                 'stream' => false,
                 'max_length' => 200,
-            ],            
+            ],
             [
                 'nome' => 'recepcaoUnidadeBOT',
                 'contexto' => 'Você perguntou para o usuário o que ele achou da recepção do local, se ele foi bem instruído ao chegar e ao sair da unidade.',
@@ -65,7 +65,7 @@ class DatabaseSeeder extends Seeder
                 'model' => 'llama3.2',
                 'stream' => false,
                 'max_length' => 200,
-            ],    
+            ],
             [
                 'nome' => 'classificaTipoMensagemBOT',
                 'contexto' => 'Você deve classificar o prompt do usuário. As classificações permitidas são: Dúvida, Reclamação, Sugestão, Elogio ou Outro',
@@ -75,7 +75,7 @@ class DatabaseSeeder extends Seeder
                 'model' => 'llama3.2',
                 'stream' => false,
                 'max_length' => 200,
-            ],       
+            ],
             [
                 'nome' => 'classificaSentimentoBOT',
                 'contexto' => 'Você deve analisar o prompt do usuário para identificar o sentimento dele. As opções permitidas são: Satisfeito, Irritado, Triste, Entusiasmado ou Neutro',
@@ -85,38 +85,38 @@ class DatabaseSeeder extends Seeder
                 'model' => 'llama3.2',
                 'stream' => false,
                 'max_length' => 200,
-            ],       
+            ],
             [
                 'nome' => 'identificaSecretariaBOT',
                 'contexto' => 'Você é assistente da prefeitura e deve classificar o prompt do usuário, de acordo com a secretaria responsavel. As secretarias disponíveis são:'
-                .' SMAD Administração,'
-                .' SMAG Agricultura,'
-                .' SMAS Assistência Social,'
-                .' SMCS Comunicação Social,'
-                .' CNTR Controladoria,'
-                .' SMCT Cultura e Turismo,'
-                .' SMED Educação,'
-                .' SMEL Esporte e Lazer,'
-                .' SMFI Finanças,'
-                .' SMGP Gestão de Pessoas,'
-                .' SMGO Governo,'
-                .' SMMA Meio Ambiente,'
-                .' SMOP Obras e Transporte,'
-                .' SMPL Planejamento,'
-                .' SMPP Políticas Públicas,'
-                .' PGM Procuradoria,'
-                .' SMSA Saúde,'
-                .' SMSP Segurança Pública,'
-                .' SMTE Trabalho e Emprego,'
-                .' SMUR Urbanismo,'
-                .' SMCIT Ciência Inovação e Tecnologia',
+                    . ' SMAD Administração,'
+                    . ' SMAG Agricultura,'
+                    . ' SMAS Assistência Social,'
+                    . ' SMCS Comunicação Social,'
+                    . ' CNTR Controladoria,'
+                    . ' SMCT Cultura e Turismo,'
+                    . ' SMED Educação,'
+                    . ' SMEL Esporte e Lazer,'
+                    . ' SMFI Finanças,'
+                    . ' SMGP Gestão de Pessoas,'
+                    . ' SMGO Governo,'
+                    . ' SMMA Meio Ambiente,'
+                    . ' SMOP Obras e Transporte,'
+                    . ' SMPL Planejamento,'
+                    . ' SMPP Políticas Públicas,'
+                    . ' PGM Procuradoria,'
+                    . ' SMSA Saúde,'
+                    . ' SMSP Segurança Pública,'
+                    . ' SMTE Trabalho e Emprego,'
+                    . ' SMUR Urbanismo,'
+                    . ' SMCIT Ciência Inovação e Tecnologia',
                 'formato_resposta' => 'De acordo com a prompt do usuário, indique o nome da secretaria responsável, sem ponto, nada mais, em pt-br.',
                 'temperatura' => 0.9,
                 'top_p' => 0.9,
                 'model' => 'llama3.2',
                 'stream' => false,
                 'max_length' => 200,
-            ],     
+            ],
             [
                 'nome' => 'resumePromptBOT',
                 'contexto' => 'Você deve resumir o prompt a seguir.',
@@ -126,7 +126,7 @@ class DatabaseSeeder extends Seeder
                 'model' => 'llama3.2',
                 'stream' => false,
                 'max_length' => 200,
-            ],                                              
+            ],
         ];
 
         foreach ($bots as $bot) {
@@ -153,51 +153,51 @@ class DatabaseSeeder extends Seeder
                 'mensagem' => "Que bom que aceitou participar!\n"
                     . "Vou iniciar a primeira pergunta então:\n"
                     . "Qual o nome da unidade de atendimento médico que você esteve hoje?",
-            ],   
+            ],
             [
                 'pesquisa' => 'smsa',
                 'nome' => 'lgpdNegado',
                 'mensagem' => "Está sem tempo para responder agora?\n"
                     . "Sem problemas, deixamos para uma próxima oportunidade!\n"
                     . "Agradeço pela atenção!",
-            ], 
+            ],
             [
                 'pesquisa' => 'smsa',
                 'nome' => 'recepcaoUnidade',
                 'mensagem' => "Agora, o que você achou da recepção da unidade?\n"
                     . "Você foi bem instruído ao chegar e ao sair do local?",
-            ], 
+            ],
             [
                 'pesquisa' => 'smsa',
                 'nome' => 'limpezaUnidade',
                 'mensagem' => "E sobre a limpeza e conservação do local?\n"
                     . "Os banheiros e corredores, estavam em ordem?",
-            ],       
+            ],
             [
                 'pesquisa' => 'smsa',
                 'nome' => 'medicoQualidade',
                 'mensagem' => "Quanto ao médico que lhe atendeu?\n"
                     . "Qual o nome dele, você gostou do atendimento, ele foi educado e prestativo?",
-            ],   
+            ],
             [
                 'pesquisa' => 'smsa',
                 'nome' => 'exameQualidade',
                 'mensagem' => "Você fez algum tipo de exame?\n"
                     . "O exame foi bem realizado?",
-            ],     
+            ],
             [
                 'pesquisa' => 'smsa',
                 'nome' => 'tempoAtendimento',
                 'mensagem' => "Estamos quase acabando, essa é a penúltima pergunta :)\n"
                     . "Caso não seja um atendimento agendado, quanto tempo você aguardou para ser atendido?"
                     . "Se era um atendimento agendado, foi atendido no horário marcado ou atrasou?",
-            ],     
+            ],
             [
                 'pesquisa' => 'smsa',
                 'nome' => 'comentarioLivre',
                 'mensagem' => "Última pergunta, na verdade é um espaço aberto, para você escrever qualquer comentário que tenha seobre esse atendimento.\n"
                     . "Fique a vontade.",
-            ],                                   
+            ],
         ];
 
         foreach ($perguntas as $pergunta) {
