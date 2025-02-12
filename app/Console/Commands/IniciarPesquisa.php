@@ -35,10 +35,6 @@ class IniciarPesquisa extends Command
         foreach ($contatos as $contato) {
             $numeroWhats = $this->formatarNumeroWhatsApp($contato['whats']);
 
-            // AQUI, PRECISA GRAVAR O TELEFONE NA TABLE DE PROCESSADA_PESQUISA, POIS É NECESSÁRIO NO JOB
-            TODO
-
-
             // 🔹 Corrigido erro na consulta
             $pergunta = PerguntaPesquisa::where('pesquisa', 'smsa')
                 ->where('nome', 'autorizacaoLGPD')

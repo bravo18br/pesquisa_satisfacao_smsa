@@ -41,8 +41,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         $pesquisa = ProcessadaPesquisa::where('numeroWhats', $this->numeroWhats)->first();
 
         if (!$pesquisa) {
-            Log::warning("⚠️ Nenhuma pesquisa encontrada para o número: {$this->numeroWhats}. Finalizando job.");
-            return 0;
+            Log::warning("⚠️ Nenhuma pesquisa encontrada para o número: {$this->numeroWhats}. Criando.");
+            ProcessadaPesquisa::create(['numeroWhats' => $this->numeroWhats]);
         }
         Log::info("✅ Pesquisa encontrada para: {$this->numeroWhats}");
 
