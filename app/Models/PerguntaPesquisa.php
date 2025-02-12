@@ -12,6 +12,7 @@ class PerguntaPesquisa extends Model
     protected $table = 'pergunta_pesquisas'; // Opcional, pois o Laravel já inferiria isso corretamente
 
     protected $fillable = [
+        'pesquisa',
         'nome',
         'mensagem',
     ];

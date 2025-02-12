@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->command->info('Iniciando inserção de bots...');
+
         $bots = [
             [
                 'nome' => 'lgpdAutorizacaoBOT',
@@ -128,11 +130,17 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($bots as $bot) {
-            Bot::create($bot);
+            $this->command->info("Processando bot: {$bot['nome']}...");
+            Bot::updateOrCreate(['nome' => $bot['nome']], $bot);
         }
+
+        $this->command->info('Todos os bots foram inseridos com sucesso!');
+
+        $this->command->info('Iniciando inserção de perguntas...');
 
         $perguntas = [
             [
+                'pesquisa' => 'smsa',
                 'nome' => 'autorizacaoLGPD',
                 'mensagem' => "Olá! Eu sou Carlos, quero saber a sua opinião sobre o seu atendimento médico em Araucária hoje.\n"
                     . "Eu sou uma inteligência artificial e suas respostas são totalmente anônimas.\n"
@@ -140,30 +148,63 @@ class DatabaseSeeder extends Seeder
                     . "Podemos iniciar a pesquisa? Responda \"sim\" ou \"não\"",
             ],
             [
+                'pesquisa' => 'smsa',
                 'nome' => 'nomeUnidadeSaude',
                 'mensagem' => "Que bom que aceitou participar!\n"
                     . "Vou iniciar a primeira pergunta então:\n"
                     . "Qual o nome da unidade de atendimento médico que você esteve hoje?",
             ],   
             [
+                'pesquisa' => 'smsa',
                 'nome' => 'lgpdNegado',
                 'mensagem' => "Está sem tempo para responder agora?\n"
                     . "Sem problemas, deixamos para uma próxima oportunidade!\n"
                     . "Agradeço pela atenção!",
             ], 
             [
+                'pesquisa' => 'smsa',
                 'nome' => 'recepcaoUnidade',
                 'mensagem' => "Agora, o que você achou da recepção da unidade?\n"
                     . "Você foi bem instruído ao chegar e ao sair do local?",
             ], 
             [
+                'pesquisa' => 'smsa',
                 'nome' => 'limpezaUnidade',
-                'mensagem' => "E sobre a limpeza e conservação do local? Os banheiros e corredores, estavam em ordem?",
-            ],                                                
+                'mensagem' => "E sobre a limpeza e conservação do local?\n"
+                    . "Os banheiros e corredores, estavam em ordem?",
+            ],       
+            [
+                'pesquisa' => 'smsa',
+                'nome' => 'medicoQualidade',
+                'mensagem' => "Quanto ao médico que lhe atendeu?\n"
+                    . "Qual o nome dele, você gostou do atendimento, ele foi educado e prestativo?",
+            ],   
+            [
+                'pesquisa' => 'smsa',
+                'nome' => 'exameQualidade',
+                'mensagem' => "Você fez algum tipo de exame?\n"
+                    . "O exame foi bem realizado?",
+            ],     
+            [
+                'pesquisa' => 'smsa',
+                'nome' => 'tempoAtendimento',
+                'mensagem' => "Estamos quase acabando, essa é a penúltima pergunta :)\n"
+                    . "Caso não seja um atendimento agendado, quanto tempo você aguardou para ser atendido?"
+                    . "Se era um atendimento agendado, foi atendido no horário marcado ou atrasou?",
+            ],     
+            [
+                'pesquisa' => 'smsa',
+                'nome' => 'comentarioLivre',
+                'mensagem' => "Última pergunta, na verdade é um espaço aberto, para você escrever qualquer comentário que tenha seobre esse atendimento.\n"
+                    . "Fique a vontade.",
+            ],                                   
         ];
 
         foreach ($perguntas as $pergunta) {
-            PerguntaPesquisa::create($pergunta);
+            $this->command->info("Processando pergunta: {$pergunta['nome']}...");
+            PerguntaPesquisa::updateOrCreate(['nome' => $pergunta['nome']], $pergunta);
         }
+
+        $this->command->info('Todas as perguntas foram inseridas com sucesso!');
     }
 }

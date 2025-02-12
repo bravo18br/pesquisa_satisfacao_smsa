@@ -13,9 +13,7 @@ class IniciarPesquisa extends Command
 
     public function handle()
     {
-        $contatos = Pesquisa::whereNotNull('telefone')
-            ->where('status_pesquisa', 'job não iniciado') // Evita reprocessamento
-            ->get();
+        $contatos = Pesquisa::whereNotNull('whats')->get();
 
         if ($contatos->isEmpty()) {
             $this->info('Nenhum contato pendente encontrado.');
@@ -23,15 +21,45 @@ class IniciarPesquisa extends Command
         }
 
         foreach ($contatos as $contato) {
-            $this->info('Criando JOB para: ' . $contato->telefone);
 
-            // Atualiza o status antes de disparar o job para evitar concorrência
-            $contato->update(['status_pesquisa' => 'job iniciado']);
+            //Mandar a primeira pergunta, antes de iniciar o job
+            $numero = $contato['whats'];
+            $numeroWhats = $this->formatarNumeroWhatsApp($numero);
+    
+            $pergunta = PerguntaPesquisa::where('pesquisa'==='smsa' || 'nome'==='autorizacaoLGPD');
+            $pergunta = $pergunta['mensagem'];
+    
+            $evolution = new EvolutionController();
 
-            dispatch(new EnviarPesquisaJob($contato));
+            if ($evolution->enviaWhats($numeroWhats, $pergunta)){
+                $this->info('Criando JOB para: ' . $numeroWhats);
+    
+                // Atualiza o status antes de disparar o job para evitar concorrência
+                $contato->update(['status_pesquisa' => 'job iniciado']);
+    
+                dispatch(new EnviarPesquisaJob($contato));
+            };
         }
 
         $this->info('Todas as pesquisas foram encaminhadas.');
         return Command::SUCCESS;
+    }
+    
+    private function formatarNumeroWhatsApp(string $numero): string
+    {
+        $numero = preg_replace('/\D/', '', $numero);
+        $numero = ltrim($numero, '0');
+
+        if (strlen($numero) === 10 || strlen($numero) === 11) {
+            $ddd = substr($numero, 0, 2);
+            $telefone = substr($numero, 2);
+        } elseif (strlen($numero) === 12) {
+            $ddd = substr($numero, 0, 3);
+            $telefone = substr($numero, 3);
+        } else {
+            throw new \InvalidArgumentException("Número inválido: $numero");
+        }
+
+        return "55{$ddd}{$telefone}@s.whatsapp.net";
     }
 }
