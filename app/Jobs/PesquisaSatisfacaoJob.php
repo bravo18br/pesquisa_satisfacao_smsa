@@ -221,6 +221,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             $encerramento = $bot->promptBot($pesquisa->comentarioLivre, 'encerramentoPesquisaBOT');
             $evolution = new EvolutionController();
             $evolution->enviaWhats($this->numeroWhats, $encerramento);
+            $pesquisa->numeroWhats = null;
+            $pesquisa->save();
         }
 
     }
