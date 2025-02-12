@@ -16,7 +16,8 @@ class IniciarPesquisa extends Command
     public function handle()
     {
         // TELEFONE DE TESTE, INSERIR NO DB
-        $telefoneTeste = '4136141593';
+        // $telefoneTeste = '4136141593';
+        $telefoneTeste = '41984191656';
         if (!TelefonePesquisa::where('whats', $telefoneTeste)->exists()) {
             TelefonePesquisa::create(['whats' => $telefoneTeste]);
             $this->info("Número de teste {$telefoneTeste} inserido na base.");
@@ -33,6 +34,10 @@ class IniciarPesquisa extends Command
 
         foreach ($contatos as $contato) {
             $numeroWhats = $this->formatarNumeroWhatsApp($contato['whats']);
+
+            // AQUI, PRECISA GRAVAR O TELEFONE NA TABLE DE PROCESSADA_PESQUISA, POIS É NECESSÁRIO NO JOB
+            TODO
+
 
             // 🔹 Corrigido erro na consulta
             $pergunta = PerguntaPesquisa::where('pesquisa', 'smsa')
@@ -60,6 +65,16 @@ class IniciarPesquisa extends Command
         }
 
         $this->info('Todas as pesquisas foram encaminhadas.');
+
+        // 🔹 Verifica se já existe um worker rodando antes de iniciar um novo
+        $process = shell_exec('ps aux | grep "queue:work" | grep -v grep');
+        if (!$process) {
+            $this->info('Iniciando o worker para processar os jobs...');
+            exec('php artisan queue:work --tries=3 --timeout=60 &');
+        } else {
+            $this->info('Worker já está rodando, não será iniciado novamente.');
+        }
+
         return 0;
     }
 

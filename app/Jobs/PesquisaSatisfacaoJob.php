@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\EvolutionController;
 use App\Http\Controllers\BotsController;
@@ -29,19 +30,25 @@ class PesquisaSatisfacaoJob implements ShouldQueue
 
     public function handle()
     {
+        Log::info("🔹 Iniciando job para: {$this->numeroWhats}");
+
         if (!$this->numeroWhats) {
-            return;
+            Log::warning("⚠️ Número de WhatsApp não definido. Finalizando job.");
+            return 0;
         }
 
         // 🔹 Recupera pesquisa associada ao número
         $pesquisa = ProcessadaPesquisa::where('numeroWhats', $this->numeroWhats)->first();
 
         if (!$pesquisa) {
-            return;
+            Log::warning("⚠️ Nenhuma pesquisa encontrada para o número: {$this->numeroWhats}. Finalizando job.");
+            return 0;
         }
+        Log::info("✅ Pesquisa encontrada para: {$this->numeroWhats}");
 
         // 🔹 Verifica se já atingiu o limite de tentativas
         if ($this->attempts() > $this->tentativasMaximas) {
+            Log::error("⛔ Número {$this->numeroWhats} atingiu o limite de tentativas. Finalizando job.");
             // 🔹 Se o usuário não responder por um período de tempo, a pesquisa é encerrada
             $encerramento = PerguntaPesquisa::where('pesquisa', 'smsa')
                 ->where('nome', 'semInteracao')
@@ -55,16 +62,19 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             $pesquisa->autorizacaoLGPD = 'não';
             $pesquisa->numeroWhats = null;
             $pesquisa->save();
-            return;
+            return 0;
         }
 
         while ($pesquisa->autorizacaoLGPD === null) {
+            Log::info("🔍 Aguardando resposta de autorização LGPD...");
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
+                Log::info("📩 Mensagens recebidas: {$mensagens}");
                 $bot = new BotsController();
                 $pesquisa->autorizacaoLGPD = $bot->promptBot($mensagens, 'lgpdAutorizacaoBOT');
 
                 if ($pesquisa->autorizacaoLGPD != 'sim') {
+                    Log::info("❌ Usuário NÃO autorizou a pesquisa. Agradecendo...");
                     // 🔹 Se o usuário não autorizou a pesquisa, envia agradecimento e remove o telefone
                     $agradecimento = PerguntaPesquisa::where('pesquisa', 'smsa')
                         ->where('nome', 'lgpdNegado')
@@ -77,6 +87,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     $pesquisa->autorizacaoLGPD = 'não';
                     $pesquisa->numeroWhats = null;
                 } else {
+                    Log::info("✅ Usuário AUTORIZOU a pesquisa. Enviando próxima pergunta...");
                     // 🔹 Se o usuário autorizou a pesquisa, envia a primeira pergunta
                     $pergunta_nomeUnidadeSaude = PerguntaPesquisa::where('pesquisa', 'smsa')
                         ->where('nome', 'nomeUnidadeSaude')
@@ -89,6 +100,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                 }
                 $pesquisa->save();
             }
+            Log::info("⏳ Reagendando job para continuar a pesquisa em 10 segundos...");
             return $this->release(10);
         }
 
@@ -223,13 +235,14 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             $evolution->enviaWhats($this->numeroWhats, $encerramento);
             $pesquisa->numeroWhats = null;
             $pesquisa->save();
-            return;
+            return 0;
         }
     }
     private function buscaUltimasMensagens($numeroWhats)
     {
-        $mensagensAlvo = EvolutionEvent::where('fromMe', false)
-            ->where('remoteJid', $this->numeroWhats)
+        Log::info("🔎 Buscando últimas mensagens para: {$this->numeroWhats}");
+        $mensagensAlvo = EvolutionEvent::where('remoteJid', $this->numeroWhats)
+            // ->where('fromMe', false)
             ->pluck('conversation')
             ->filter()
             ->implode(' ');
@@ -238,6 +251,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         $mensagensIds = EvolutionEvent::where('fromMe', false)
             ->where('remoteJid', $this->numeroWhats)
             ->pluck('id');
+
+        Log::info("📋 Mensagens obtidas: " . json_encode($mensagensAlvo));
         EvolutionEvent::whereIn('id', $mensagensIds)->delete();
 
         return $mensagensAlvo;
