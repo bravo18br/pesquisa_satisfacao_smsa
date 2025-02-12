@@ -223,8 +223,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             $evolution->enviaWhats($this->numeroWhats, $encerramento);
             $pesquisa->numeroWhats = null;
             $pesquisa->save();
+            return;
         }
-
     }
     private function buscaUltimasMensagens($numeroWhats)
     {
