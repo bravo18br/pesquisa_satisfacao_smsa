@@ -15,6 +15,15 @@ class IniciarPesquisa extends Command
 
     public function handle()
     {
+        // TELEFONE DE TESTE, INSERIR NO DB
+        $telefoneTeste = '4136141593';
+        if (!TelefonePesquisa::where('whats', $telefoneTeste)->exists()) {
+            TelefonePesquisa::create(['whats' => $telefoneTeste]);
+            $this->info("Número de teste {$telefoneTeste} inserido na base.");
+        } else {
+            $this->info("Número de teste {$telefoneTeste} já existe na base.");
+        }
+
         $contatos = TelefonePesquisa::whereNotNull('whats')->get();
 
         if ($contatos->isEmpty()) {

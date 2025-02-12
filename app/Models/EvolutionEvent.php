@@ -10,10 +10,9 @@ class EvolutionEvent extends Model
     use SoftDeletes;
 
     protected $fillable =
-    [
-        // 'event',
-        // 'instance',
-        'data'];
+        [
+            'data'
+        ];
     protected $dates = ['deleted_at'];
     protected $casts = [
         'data' => 'json'

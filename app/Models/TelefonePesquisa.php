@@ -9,9 +9,9 @@ class TelefonePesquisa extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'telefone_pesquisas';
-
-    protected $fillable = [
-        'whats'
-    ];
+    protected $fillable =
+        [
+            'whats'
+        ];
+    protected $dates = ['deleted_at'];
 }
