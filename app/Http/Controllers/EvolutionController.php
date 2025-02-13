@@ -2,12 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use App\Models\EvolutionEvent;
-use App\Http\Controllers\OllamaController;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\BotsController;
 
 class EvolutionController extends Controller
 {
@@ -20,53 +16,7 @@ class EvolutionController extends Controller
         $this->apiUrl = env('EVOLUTION_API_URL');
         $this->apiKey = env('EVOLUTION_API_KEY');
         $this->instance = env('EVOLUTION_INSTANCE');
-    }
-  
-    public function verificaMensagens()
-    {
-        $mensagem = EvolutionEvent::whereRaw("data->'data'->'message'->>'conversation' LIKE ?", ['%Ollama%'])->first();
-        // $mensagem = EvolutionEvent::first();
-    
-        if (!$mensagem) {
-            return response()->json(['success' => false, 'message' => 'Nenhuma mensagem encontrada.']);
-        }
-    
-        // Acesso direto ao campo JSON
-        $data = $mensagem->data; // Não precisa de json_decode aqui
-        
-        // Obtém dados do remetente
-        $phone = $data['data']['key']['remoteJid'];
-        $prompt = $data['data']['message']['conversation'] ?? null;
-        $pushName = $data['data']['pushName'] ?? null;
-    
-        // Enviar mensagem para o bot
-        $bot = new BotsController();
-        $bot->testarParametros($phone, $prompt, $pushName);
-        // $resumo = $bot->botResumeProblema($phone, $prompt, $pushName);
-        // $secretaria = $bot->botIdentificaSecretaria($phone, $prompt, $pushName);
-        // $sentimento = $bot->botAnaliseDeSentimento($phone, $prompt, $pushName);
-        // $tipoMensagem = $bot->botAnaliseTipoMensagem($phone, $prompt, $pushName);
-        // $endereco = $bot->botDetectaEndereco($phone, $prompt, $pushName);
-
-        // $glpi = [
-        //     'Usuario' => $pushName,
-        //     'Telefone' => $this->limpaTelefone($phone),
-        //     'CPF' => $this->procuraCPF($prompt) ?? 'Não encontrado',
-        //     'Secretaria' => $secretaria,
-        //     'Solicitacao' => $resumo,
-        //     'Endereco' => $endereco,
-        //     'Sentimento' => $sentimento,
-        //     'Tipo de Mensagem' => $tipoMensagem
-        // ];
-
-        // if($this->enviaWhats($phone, $glpi)){
-        //     // Aplica soft delete na mensagem
-        //     $mensagem->delete();
-        //     return response()->json($glpi);
-        // } else{
-        //     return response()->json(['success' => false, 'message' => 'Erro ao enviar mensagem.']);
-        // }
-    }  
+    } 
     
     public function enviaWhats($phone, $mensagem) {
         $payload = [
@@ -83,10 +33,10 @@ class EvolutionController extends Controller
         ])->post("{$this->apiUrl}/message/sendText/{$this->instance}", $payload);
     
         if ($response->successful()) {
-            log::info('Mensagem enviada com sucesso');
+            log::info('EvolutionController.php - Mensagem enviada com sucesso');
             return true;
         }else{
-            log::error('Erro ao enviar mensagem: '. $response->body());
+            log::error('EvolutionController.php - Erro ao enviar mensagem: '. $response->body());
             return false;
         }
     }
