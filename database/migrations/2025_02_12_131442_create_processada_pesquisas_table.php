@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('processada_pesquisas', function (Blueprint $table) {
             $table->id();
             $table->string('numeroWhats')->nullable();
+            $table->string('primeiroContato')->nullable();
             $table->string('autorizacaoLGPD')->nullable();
             $table->text('nomeUnidadeSaude')->nullable();
             $table->text('recepcaoUnidade')->nullable();
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->text('exameQualidade')->nullable();
             $table->text('tempoAtendimento')->nullable();
             $table->text('comentarioLivre')->nullable();
+            $table->boolean('pesquisaConcluida')->nullable()->default(false);
             $table->timestamps();
         });
     }

@@ -33,7 +33,7 @@ class EvolutionController extends Controller
         ])->post("{$this->apiUrl}/message/sendText/{$this->instance}", $payload);
     
         if ($response->successful()) {
-            log::info('EvolutionController.php - Mensagem enviada com sucesso');
+            // log::info('EvolutionController.php - Mensagem enviada com sucesso');
             return true;
         }else{
             log::error('EvolutionController.php - Erro ao enviar mensagem: '. $response->body());

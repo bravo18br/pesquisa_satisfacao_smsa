@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\OllamaController;
 use App\Models\Bot;
@@ -12,7 +10,8 @@ class BotsController extends Controller
 {
     public function promptBot($prompt, $bot_nome)
     {
-        $bot = Bot::where('nome'=== $bot_nome)->first();
+        Log::info("promptBot($prompt, $bot_nome)");
+        $bot = Bot::where("nome", $bot_nome)->first();
         $params = [
             "model" => $bot->model,
             "prompt" => $bot->contexto .' Prompt: <'.$prompt.'> '. $bot->formato_resposta,

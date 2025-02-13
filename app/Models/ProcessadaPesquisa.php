@@ -13,6 +13,7 @@ class ProcessadaPesquisa extends Model
 
     protected $fillable = [
         'numeroWhats',
+        'primeiroContato',
         'autorizacaoLGPD',
         'nomeUnidadeSaude',
         'recepcaoUnidade',
@@ -21,5 +22,6 @@ class ProcessadaPesquisa extends Model
         'exameQualidade',
         'tempoAtendimento',
         'comentarioLivre',
+        'pesquisaConcluida'
     ];
 }
