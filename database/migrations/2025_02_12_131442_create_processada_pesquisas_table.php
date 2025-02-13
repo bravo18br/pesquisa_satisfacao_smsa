@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('processada_pesquisas', function (Blueprint $table) {
             $table->id();
-            $table->string('numeroWhats');
-            $table->string('autorizacaoLGPD');
-            $table->text('nomeUnidadeSaude');
-            $table->text('recepcaoUnidade');
-            $table->text('limpezaUnidade');
-            $table->text('medicoQualidade');
-            $table->text('exameQualidade');
-            $table->text('tempoAtendimento');
-            $table->text('comentarioLivre');
+            $table->string('numeroWhats')->nullable();
+            $table->string('autorizacaoLGPD')->nullable();
+            $table->text('nomeUnidadeSaude')->nullable();
+            $table->text('recepcaoUnidade')->nullable();
+            $table->text('limpezaUnidade')->nullable();
+            $table->text('medicoQualidade')->nullable();
+            $table->text('exameQualidade')->nullable();
+            $table->text('tempoAtendimento')->nullable();
+            $table->text('comentarioLivre')->nullable();
             $table->timestamps();
         });
     }

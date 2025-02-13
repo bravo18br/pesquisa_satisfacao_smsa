@@ -62,14 +62,28 @@ class IniciarPesquisa extends Command
 
         $this->info('Todas as pesquisas foram encaminhadas.');
 
-        // 🔹 Verifica se já existe um worker rodando antes de iniciar um novo
-        $process = shell_exec('ps aux | grep "queue:work" | grep -v grep');
-        if (!$process) {
-            $this->info('Iniciando o worker para processar os jobs...');
-            exec('php artisan queue:work --tries=3 --timeout=60 &');
+        // Verifica se já existe um worker rodando antes de iniciar um novo
+        if (stripos(PHP_OS, 'WIN') !== false) {
+            // Ambiente Windows
+            $process = shell_exec('tasklist /FI "IMAGENAME eq php.exe" /V | findstr /I "queue:work"');
+            if (!$process) {
+                $this->info('Iniciando o worker para processar os jobs (Windows)...');
+                // No Windows, inicia em background usando start /B
+                pclose(popen('start /B php artisan queue:work --tries=3 --timeout=60', 'r'));
+            } else {
+                $this->info('Worker já está rodando, não será iniciado novamente.');
+            }
         } else {
-            $this->info('Worker já está rodando, não será iniciado novamente.');
+            // Ambiente Linux/Unix
+            $process = shell_exec('ps aux | grep "queue:work" | grep -v grep');
+            if (!$process) {
+                $this->info('Iniciando o worker para processar os jobs...');
+                exec('php artisan queue:work --tries=3 --timeout=60 &');
+            } else {
+                $this->info('Worker já está rodando, não será iniciado novamente.');
+            }
         }
+
 
         return 0;
     }

@@ -1,5 +1,6 @@
 <?php
 
+// app/Models/EvolutionEvent.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -9,12 +10,9 @@ class EvolutionEvent extends Model
 {
     use SoftDeletes;
 
-    protected $fillable =
-        [
-            'data'
-        ];
-    protected $dates = ['deleted_at'];
+    protected $fillable = ['data'];
+
     protected $casts = [
-        'data' => 'json'
+        'data' => 'object', // ou 'array', conforme sua preferência
     ];
 }

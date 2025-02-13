@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 use App\Http\Controllers\EvolutionController;
 use App\Http\Controllers\BotsController;
@@ -65,7 +66,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return 0;
         }
 
-        while ($pesquisa->autorizacaoLGPD === null) {
+        while (is_null($pesquisa->autorizacaoLGPD)) {
             Log::info("🔍 Aguardando resposta de autorização LGPD...");
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
@@ -104,7 +105,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return $this->release(10);
         }
 
-        while ($pesquisa->nomeUnidadeSaude === null) {
+        while (is_null($pesquisa->nomeUnidadeSaude)) {
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
                 $bot = new BotsController();
@@ -123,7 +124,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return $this->release(10);
         }
 
-        while ($pesquisa->recepcaoUnidade === null) {
+        while (is_null($pesquisa->recepcaoUnidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
                 $bot = new BotsController();
@@ -142,7 +143,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return $this->release(10);
         }
 
-        while ($pesquisa->limpezaUnidade === null) {
+        while (is_null($pesquisa->limpezaUnidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
                 $bot = new BotsController();
@@ -161,7 +162,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return $this->release(10);
         }
 
-        while ($pesquisa->medicoQualidade === null) {
+        while (is_null($pesquisa->medicoQualidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
                 $bot = new BotsController();
@@ -180,7 +181,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return $this->release(10);
         }
 
-        while ($pesquisa->exameQualidade === null) {
+        while (is_null($pesquisa->exameQualidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
                 $bot = new BotsController();
@@ -199,7 +200,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return $this->release(10);
         }
 
-        while ($pesquisa->tempoAtendimento === null) {
+        while (is_null($pesquisa->tempoAtendimento)) {
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
                 $bot = new BotsController();
@@ -218,7 +219,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return $this->release(10);
         }
 
-        while ($pesquisa->comentarioLivre === null) {
+        while (is_null($pesquisa->comentarioLivre)) {
             $mensagens = $this->buscaUltimasMensagens($this->numeroWhats);
             if ($mensagens) {
                 $bot = new BotsController();
@@ -228,7 +229,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return $this->release(10);
         }
 
-        if ($pesquisa->comentarioLivre != null) {
+        if (!is_null($pesquisa->comentarioLivre)) {
             $bot = new BotsController();
             $encerramento = $bot->promptBot($pesquisa->comentarioLivre, 'encerramentoPesquisaBOT');
             $evolution = new EvolutionController();
@@ -240,21 +241,27 @@ class PesquisaSatisfacaoJob implements ShouldQueue
     }
     private function buscaUltimasMensagens($numeroWhats)
     {
-        Log::info("🔎 Buscando últimas mensagens para: {$this->numeroWhats}");
-        $mensagensAlvo = EvolutionEvent::where('remoteJid', $this->numeroWhats)
-            // ->where('fromMe', false)
-            ->pluck('conversation')
+        Log::info("🔎 Buscando últimas mensagens para: {$numeroWhats}");
+
+        // Obtém as mensagens com base no remoteJid armazenado no banco
+        $mensagensAlvo = EvolutionEvent::where('data->data->key->remoteJid', $numeroWhats)
+            // ->where('data->data->key->fromMe', false)
+            ->pluck('data')
+            ->map(fn($data) => $data->message->conversation ?? null)
             ->filter()
             ->implode(' ');
 
         // 🔹 Obtém os IDs das mensagens processadas para exclusão
-        $mensagensIds = EvolutionEvent::where('fromMe', false)
-            ->where('remoteJid', $this->numeroWhats)
+        $mensagensIds = EvolutionEvent::where('data->data->key->remoteJid', $numeroWhats)
+            // ->where('data->data->key->fromMe', false)
             ->pluck('id');
 
         Log::info("📋 Mensagens obtidas: " . json_encode($mensagensAlvo));
+
+        // Exclui mensagens já processadas
         EvolutionEvent::whereIn('id', $mensagensIds)->delete();
 
         return $mensagensAlvo;
     }
+
 }
