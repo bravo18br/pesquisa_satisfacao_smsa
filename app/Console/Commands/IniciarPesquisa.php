@@ -18,7 +18,7 @@ class IniciarPesquisa extends Command
     {
         // TELEFONE DE TESTE, INSERIR NO DB
         // $telefoneTeste = '4136141593';
-        $telefoneTeste = '41984191656';
+        $telefoneTeste = '4184191656';
         if (!TelefonePesquisa::where('whats', $telefoneTeste)->exists()) {
             TelefonePesquisa::create(['whats' => $telefoneTeste]);
             Log::info("IniciarPesquisa.php - Número de teste {$telefoneTeste} inserido na base.");
@@ -35,37 +35,20 @@ class IniciarPesquisa extends Command
         }
 
         foreach ($contatos as $contato) {
-            $numeroWhats = $this->formatarNumeroWhatsApp($contato['whats']);
-            $existe = ProcessadaPesquisa::where('numeroWhats', $numeroWhats)
+            $existe = ProcessadaPesquisa::where('numeroWhats', $contato['whats'])
                 ->where('pesquisaConcluida', false)
                 ->first();
-            
+
             if (!$existe) {
-                ProcessadaPesquisa::create(['numeroWhats' => $numeroWhats]);
+                ProcessadaPesquisa::create(['numeroWhats' => $contato['whats']]);
             }
-            
-            dispatch(new PesquisaSatisfacaoJob($numeroWhats));
-            Log::info("IniciarPesquisa.php - JOB criado para: {$numeroWhats}");
+
+            dispatch(new PesquisaSatisfacaoJob($contato['whats']));
+            Log::info("IniciarPesquisa.php - JOB criado para: {$contato['whats']}");
         }
 
         Log::info('IniciarPesquisa.php - Todas as pesquisas foram encaminhadas.');
 
     }
-    private function formatarNumeroWhatsApp(string $numero): string
-    {
-        $numero = preg_replace('/\D/', '', $numero);
-        $numero = ltrim($numero, '0');
 
-        if (strlen($numero) === 10 || strlen($numero) === 11) {
-            $ddd = substr($numero, 0, 2);
-            $telefone = substr($numero, 2);
-        } elseif (strlen($numero) === 12) {
-            $ddd = substr($numero, 0, 3);
-            $telefone = substr($numero, 3);
-        } else {
-            throw new \InvalidArgumentException("Número inválido: $numero");
-        }
-
-        return "55{$ddd}{$telefone}@s.whatsapp.net";
-    }
 }
