@@ -29,7 +29,6 @@ class PesquisaSatisfacaoJob implements ShouldQueue
 
     public function handle()
     {
-        Log::info("Iniciando JOB para: {$this->telefonePesquisa}");
         $evolution = new EvolutionController();
         $bot = new BotsController();
 
@@ -38,43 +37,39 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             ->first();
 
         if (!$pesquisa) {
-            Log::warning("Nenhuma pesquisa encontrada para {$this->telefonePesquisa}");
             return;
         }
 
         if (is_null($pesquisa->primeiroContato)) {
-            Log::info("Enviando primeira mensagem para {$this->telefonePesquisa}");
-
             $pergunta = PerguntaPesquisa::where('pesquisa', 'smsa')
                 ->where('nome', 'autorizacaoLGPD')
                 ->first();
 
             if (!$pergunta) {
-                Log::warning("Nenhuma pergunta LGPD encontrada.");
                 return;
             }
 
             if ($evolution->enviaWhats($this->telefonePesquisa, $pergunta->mensagem)) {
                 $pesquisa->primeiroContato = 'não';
                 $pesquisa->save();
-                Log::info("Mensagem enviada com sucesso para {$this->telefonePesquisa}");
-            } else {
-                Log::error("Falha ao enviar mensagem para {$this->telefonePesquisa}. Reagendando tentativa.");
             }
             return;
         }
 
         if (is_null($pesquisa->autorizacaoLGPD)) {
-            Log::info("Aguardando resposta de autorização LGPD.");
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
-                Log::info("Mensagens recebidas: $mensagens");
+                $responseBot = $bot->promptBot($mensagens, 'lgpdAutorizacaoBOT');
+                $responseBotData = $responseBot->getData(true); // Converte para array associativo
+                $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
 
-                $pesquisa->autorizacaoLGPD = $bot->promptBot($mensagens, 'lgpdAutorizacaoBOT');
-                Log::info("$pesquisa->autorizacaoLGPD:", [$pesquisa->autorizacaoLGPD]);
+                if (!$response) {
+                    return;
+                }
+
+                $pesquisa->autorizacaoLGPD = $response;
+
                 if ($pesquisa->autorizacaoLGPD != 'sim') {
-                    Log::info("Usuário NÃO autorizou a pesquisa. Agradecendo...");
-                    // 🔹 Se o usuário não autorizou a pesquisa, envia agradecimento e remove o telefone
                     $agradecimento = PerguntaPesquisa::where('pesquisa', 'smsa')
                         ->where('nome', 'lgpdNegado')
                         ->first();
@@ -82,11 +77,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     if ($agradecimento) {
                         $evolution->enviaWhats($this->telefonePesquisa, $agradecimento->mensagem);
                     }
-                    $pesquisa->autorizacaoLGPD = 'não';
                     $pesquisa->numeroWhats = null;
+                    $pesquisa->pesquisaConcluida = true;
+                    $pesquisa->save();
+                    return 0;
                 } else {
-                    Log::info("Usuário AUTORIZOU a pesquisa. Enviando próxima pergunta...");
-                    // 🔹 Se o usuário autorizou a pesquisa, envia a primeira pergunta
                     $pergunta_nomeUnidadeSaude = PerguntaPesquisa::where('pesquisa', 'smsa')
                         ->where('nome', 'nomeUnidadeSaude')
                         ->first();
@@ -97,27 +92,218 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                 }
                 $pesquisa->save();
             }
-            Log::info("Encerrado.");
+            return;
+        }
+
+        if (is_null($pesquisa->nomeUnidadeSaude)) {
+            $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
+            if ($mensagens) {
+                $responseBot = $bot->promptBot($mensagens, 'unidadeAtendimentoBOT');
+                $responseBotData = $responseBot->getData(true); // Converte para array associativo
+                $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
+
+                if (!$response) {
+                    return;
+                }
+
+                $pesquisa->nomeUnidadeSaude = $response;
+                $pesquisa->save();
+
+                $pergunta_recepcaoUnidade = PerguntaPesquisa::where('pesquisa', 'smsa')
+                    ->where('nome', 'recepcaoUnidade')
+                    ->first();
+
+                if ($pergunta_recepcaoUnidade) {
+                    $evolution->enviaWhats($this->telefonePesquisa, $pergunta_recepcaoUnidade->mensagem);
+                }
+
+            }
+            return;
+        }
+
+        if (is_null($pesquisa->recepcaoUnidade)) {
+            $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
+            if ($mensagens) {
+                $responseBot = $bot->promptBot($mensagens, 'recepcaoUnidadeBOT');
+                $responseBotData = $responseBot->getData(true); // Converte para array associativo
+                $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
+
+                if (!$response) {
+                    return;
+                }
+
+                $pesquisa->recepcaoUnidade = $response;
+                $pesquisa->save();
+
+                $pergunta_limpezaUnidade = PerguntaPesquisa::where('pesquisa', 'smsa')
+                    ->where('nome', 'limpezaUnidade')
+                    ->first();
+
+                if ($pergunta_limpezaUnidade) {
+                    $evolution->enviaWhats($this->telefonePesquisa, $pergunta_limpezaUnidade->mensagem);
+                }
+
+            }
+            return;
+        }
+
+        if (is_null($pesquisa->limpezaUnidade)) {
+            $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
+            if ($mensagens) {
+                $responseBot = $bot->promptBot($mensagens, 'limpezaConservacaoBOT');
+                $responseBotData = $responseBot->getData(true); // Converte para array associativo
+                $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
+
+                if (!$response) {
+                    return;
+                }
+
+                $pesquisa->limpezaUnidade = $response;
+                $pesquisa->save();
+
+                $pergunta_medicoQualidade = PerguntaPesquisa::where('pesquisa', 'smsa')
+                    ->where('nome', 'medicoQualidade')
+                    ->first();
+
+                if ($pergunta_medicoQualidade) {
+                    $evolution->enviaWhats($this->telefonePesquisa, $pergunta_medicoQualidade->mensagem);
+                }
+
+            }
+            return;
+        }
+
+        if (is_null($pesquisa->medicoQualidade)) {
+            $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
+            if ($mensagens) {
+                $responseBot = $bot->promptBot($mensagens, 'medicoQualidadeBOT');
+                $responseBotData = $responseBot->getData(true); // Converte para array associativo
+                $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
+
+                if (!$response) {
+                    return;
+                }
+
+                $pesquisa->medicoQualidade = $response;
+                $pesquisa->save();
+
+                $pergunta_exameQualidade = PerguntaPesquisa::where('pesquisa', 'smsa')
+                    ->where('nome', 'exameQualidade')
+                    ->first();
+
+                if ($pergunta_exameQualidade) {
+                    $evolution->enviaWhats($this->telefonePesquisa, $pergunta_exameQualidade->mensagem);
+                }
+            }
+            return;
+        }
+
+        if (is_null($pesquisa->exameQualidade)) {
+            $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
+            if ($mensagens) {
+                $responseBot = $bot->promptBot($mensagens, 'exameQualidadeBOT');
+                $responseBotData = $responseBot->getData(true); // Converte para array associativo
+                $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
+
+                if (!$response) {
+                    return;
+                }
+
+                $pesquisa->exameQualidade = $response;
+                $pesquisa->save();
+
+                $pergunta_tempoAtendimento = PerguntaPesquisa::where('pesquisa', 'smsa')
+                    ->where('nome', 'tempoAtendimento')
+                    ->first();
+
+                if ($pergunta_tempoAtendimento) {
+                    $evolution->enviaWhats($this->telefonePesquisa, $pergunta_tempoAtendimento->mensagem);
+                }
+            }
+            return;
+        }
+
+        if (is_null($pesquisa->tempoAtendimento)) {
+            $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
+
+            if ($mensagens) {
+                $responseBot = $bot->promptBot($mensagens, 'tempoAtendimentoBOT');
+                $responseBotData = $responseBot->getData(true);
+                $response = $responseBotData['response'] ?? null;
+
+                if (!$response) {
+                    return;
+                }
+
+                $pesquisa->tempoAtendimento = $response;
+                $pesquisa->save();
+
+                $pergunta_comentarioLivre = PerguntaPesquisa::where('pesquisa', 'smsa')
+                    ->where('nome', 'comentarioLivre')
+                    ->first();
+
+                if ($pergunta_comentarioLivre) {
+                    $evolution->enviaWhats($this->telefonePesquisa, $pergunta_comentarioLivre->mensagem);
+                }
+            }
+            return;
+        }
+
+        if (is_null($pesquisa->comentarioLivre)) {
+            $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
+
+            if ($mensagens) {
+                $responseBot = $bot->promptBot($mensagens, 'comentarioLivreBOT');
+                $responseBotData = $responseBot->getData(true);
+                $response = $responseBotData['response'] ?? null;
+
+                if (!$response) {
+                    return;
+                }
+
+                $pesquisa->comentarioLivre = $response;
+                $pesquisa->save();
+
+                $encerramentoBot = $bot->promptBot($response, 'encerramentoPesquisaBOT');
+                $encerramentoBotData = $encerramentoBot->getData(true);
+                $encerramento = $encerramentoBotData['response'] ?? null;
+
+                $evolution->enviaWhats($this->telefonePesquisa, $encerramento);
+
+                $pesquisa->pesquisaConcluida = true;
+                $pesquisa->numeroWhats = null;
+                $pesquisa->save();
+
+            }
             return;
         }
     }
 
     private function buscaUltimasMensagens($telefonePesquisa)
     {
-        // Obtém as mensagens com base no remoteJid armazenado no banco
         $mensagensAlvo = EvolutionEvent::all();
         $resposta = '';
 
         foreach ($mensagensAlvo as $alvo) {
             $registro = json_decode($alvo, true);
-            $data = $registro['data']['data'];
 
-            if ($remoteJid === $this->formatarNumeroWhatsApp8($telefonePesquisa) || $remoteJid === $this->formatarNumeroWhatsApp9($telefonePesquisa)) {
-                $resposta .= $data['message']['conversation'] . ' ';
+            // Garante que a estrutura do JSON existe
+            if (!isset($registro['data']['data']['key']['remoteJid']) || !isset($registro['data']['data']['message']['conversation'])) {
+                continue; // Pula se os dados necessários não existirem
+            }
+
+            $remoteJid = $registro['data']['data']['key']['remoteJid'];
+            $conversation = $registro['data']['data']['message']['conversation']; // Correção aqui
+            $numeroFormatado8 = $this->formatarNumeroWhatsApp8($telefonePesquisa);
+            $numeroFormatado9 = $this->formatarNumeroWhatsApp9($telefonePesquisa);
+
+            if ($remoteJid === $numeroFormatado8 || $remoteJid === $numeroFormatado9) {
+                $resposta .= $conversation . ' ';
+                $alvo->delete();
             }
         }
 
-        return $resposta;
+        return trim($resposta); // Remove espaços extras no final
     }
 
     private function formatarNumeroWhatsApp8(string $numero): string

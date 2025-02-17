@@ -16,9 +16,33 @@ class EvolutionController extends Controller
         $this->apiUrl = env('EVOLUTION_API_URL');
         $this->apiKey = env('EVOLUTION_API_KEY');
         $this->instance = env('EVOLUTION_INSTANCE');
-    } 
-    
-    public function enviaWhats($phone, $mensagem) {
+    }
+
+    public function enviaWhats($phone, $mensagem)
+    {
+        $numero8digitos = $this->formatarNumero8digitos($phone);
+        $response = $this->enviaMensagem($numero8digitos, $mensagem);
+
+        if ($response->successful()) {
+            return true;
+        } else {
+            $body = json_decode($response->body(), true);
+            log::error('EvolutionController.php - Erro ao enviar mensagem: ' . $body);
+            if (isset($body['response']['message'][0]['exists']) && $body['response']['message'][0]['exists'] === false) {
+                $numero9digitos = $this->formatarNumero9digitos($phone);
+                $response = $this->enviaMensagem($numero9digitos, $mensagem);
+                if ($response->successful()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            return false;
+        }
+    }
+
+    private function enviaMensagem($phone, $mensagem)
+    {
         $payload = [
             'number' => $phone,
             'text' => $mensagem,
@@ -26,71 +50,53 @@ class EvolutionController extends Controller
             'linkPreview' => false,
             'mentionsEveryOne' => false
         ];
-    
-        $response = Http::withHeaders([
+
+        return Http::withHeaders([
             'apikey' => $this->apiKey,
             'Content-Type' => 'application/json'
         ])->post("{$this->apiUrl}/message/sendText/{$this->instance}", $payload);
-    
-        if ($response->successful()) {
-            // log::info('EvolutionController.php - Mensagem enviada com sucesso');
-            return true;
-        }else{
-            log::error('EvolutionController.php - Erro ao enviar mensagem: '. $response->body());
-            return false;
-        }
     }
 
-    private function procuraCPF($mensagem) {
-        // Expressão regular melhorada para capturar apenas CPFs válidos
-        preg_match_all('/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/', $mensagem, $matches);
-    
-        if (empty($matches[0])) {
-            return null;
-        }
-    
-        foreach ($matches[0] as $cpf) {
-            // Remove pontos e traços para validação
-            $cpfLimpo = preg_replace('/\D/', '', $cpf);
-    
-            // Se for válido, retorna formatado
-            if ($this->validaCPF($cpfLimpo)) {
-                return preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "$1.$2.$3-$4", $cpfLimpo);
-            }
-        }
-    
-        return null;
-    }
-    
-    
-    private function validaCPF($cpf) {
-        // Elimina CPFs inválidos conhecidos
-        if (preg_match('/^(\d)\1{10}$/', $cpf)) {
-            return false;
-        }
-    
-        // Calcula o primeiro dígito verificador
-        for ($t = 9; $t < 11; $t++) {
-            $soma = 0;
-            for ($i = 0; $i < $t; $i++) {
-                $soma += $cpf[$i] * (($t + 1) - $i);
-            }
-            $digito = (($soma * 10) % 11) % 10;
-            if ($cpf[$t] != $digito) {
-                return false;
-            }
-        }
-    
-        return true;
-    }
-    
-    private function limpaTelefone($telefone) {
-        // Remove tudo que não for número
-        $telefone = preg_replace('/\D/', '', $telefone);
+    private function formatarNumero8digitos(string $numero): string
+    {
+        $numero = preg_replace('/\D/', '', $numero); // Remove tudo que não for número
+        $numero = ltrim($numero, '0'); // Remove zeros à esquerda
 
-        // Aplica a regex para formatar o número corretamente
-        $telefone = preg_replace('/^55(\d{2})(\d{4,5})(\d{4})$/', '($1) $2-$3', $telefone);
+        if (strlen($numero) < 10 || strlen($numero) > 12) {
+            throw new \InvalidArgumentException("Número inválido: $numero");
+        }
 
-        return $telefone;
+        // Se o telefone tiver 9 dígitos, remove o primeiro (para ficar com 8)
+        if (strlen($numero) === 11 || strlen($numero) === 12) {
+            $ddd = substr($numero, 0, 2);
+            $telefone = substr($numero, 3); // Remove o primeiro dígito do telefone (o "9")
+        } else {
+            $ddd = substr($numero, 0, 2);
+            $telefone = substr($numero, 2);
+        }
+
+        return "55{$ddd}{$telefone}";
+    }
+
+    private function formatarNumero9digitos(string $numero): string
+    {
+        $numero = preg_replace('/\D/', '', $numero);
+        $numero = ltrim($numero, '0');
+
+        if (strlen($numero) < 10 || strlen($numero) > 12) {
+            throw new \InvalidArgumentException("Número inválido: $numero");
+        }
+
+        // Se o telefone já tiver 9 dígitos, mantém
+        if (strlen($numero) === 11 || strlen($numero) === 12) {
+            $ddd = substr($numero, 0, 2);
+            $telefone = substr($numero, 2);
+        } else {
+            // Se tiver apenas 8 dígitos, adiciona um "9" na frente
+            $ddd = substr($numero, 0, 2);
+            $telefone = '9' . substr($numero, 2);
+        }
+
+        return "55{$ddd}{$telefone}";
     }
 }

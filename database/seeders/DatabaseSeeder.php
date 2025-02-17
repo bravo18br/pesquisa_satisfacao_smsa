@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             [
                 'nome' => 'lgpdAutorizacaoBOT',
                 'contexto' => 'Você perguntou para o usuário se ele aceita ou não participar de uma pesquisa de satisfação.',
-                'formato_resposta' => 'De acordo com a prompt do usuário, responda "sim" se ele aceitou participar da pesquisa, ou "não" caso não tenha aceitado.',
+                'formato_resposta' => 'De acordo com a prompt do usuário, responda "sim" se ele aceitou participar da pesquisa, ou "não" caso não tenha aceitado. responda sempre em minusculo, sem ponto, apenas sim ou não',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
                 'model' => 'llama3.2',
@@ -28,8 +28,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'unidadeAtendimentoBOT',
-                'contexto' => 'Você perguntou para o usuário qual unidade de atendimento médico ele esteve hoje.',
-                'formato_resposta' => 'De acordo com a prompt do usuário, qual o nome da unidade de atendimento médico? Se ele não informou, responda "não informado"',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você perguntou para o usuário qual unidade de atendimento médico ele esteve hoje.',
+                'formato_resposta' => 'De acordo com a prompt do usuário, qual o nome da unidade de atendimento médico? Se ele não informou, responda "não informado". Resposta curta e objetiva.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
                 'model' => 'llama3.2',
@@ -38,8 +38,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'recepcaoUnidadeBOT',
-                'contexto' => 'Você perguntou para o usuário o que ele achou da recepção do local, se ele foi bem instruído ao chegar e ao sair da unidade.',
-                'formato_resposta' => 'De acordo com a prompt do usuário, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não da recepção da unidade.',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você perguntou para o usuário o que ele achou da recepção do local, se ele foi bem instruído ao chegar e ao sair da unidade.',
+                'formato_resposta' => 'De acordo com a prompt do usuário, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não da recepção da unidade. Resposta curta e objetiva.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
                 'model' => 'llama3.2',
@@ -48,8 +48,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'limpezaConservacaoBOT',
-                'contexto' => 'Você perguntou para o usuário o que ele achou da limpeza e conservação do local, se os banheiros e corredores estavam em ordem.',
-                'formato_resposta' => 'De acordo com a prompt do usuário, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não da limpeza e conservação da unidade.',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você perguntou para o usuário o que ele achou da limpeza e conservação do local, se os banheiros e corredores estavam em ordem.',
+                'formato_resposta' => 'De acordo com a prompt do usuário, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não da limpeza e conservação da unidade. Resposta curta e objetiva.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
                 'model' => 'llama3.2',
@@ -58,8 +58,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'medicoQualidadeBOT',
-                'contexto' => 'Você perguntou para o usuário o nome do médico e se ele gostou do atendimento médico.',
-                'formato_resposta' => 'De acordo com a prompt do usuário, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não do médico.',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você perguntou para o usuário o nome do médico e se ele gostou do atendimento médico.',
+                'formato_resposta' => 'De acordo com a prompt do usuário, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não do médico. Resposta curta e objetiva.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
                 'model' => 'llama3.2',
@@ -68,8 +68,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'exameQualidadeBOT',
-                'contexto' => 'Você perguntou para o usuário se ele fez um exame médico hoje, e se ele gostou de como esse exame foi feito.',
-                'formato_resposta' => 'De acordo com a prompt do usuário, informe se ele fez um exame hoje, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não do exame.',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você perguntou para o usuário se ele fez um exame médico hoje, e se ele gostou de como esse exame foi feito.',
+                'formato_resposta' => 'De acordo com a prompt do usuário, informe se ele fez um exame hoje, faça um breve resumo sobre a experiência dele, e informe se ele gostou ou não do exame. Resposta curta e objetiva.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
                 'model' => 'llama3.2',
@@ -78,7 +78,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'tempoAtendimentoBOT',
-                'contexto' => 'Você perguntou para o usuário se ele percebeu alguma demora para ser atendido',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você perguntou para o usuário se ele percebeu alguma demora para ser atendido',
                 'formato_resposta' => 'De acordo com a prompt do usuário, registre quanto tempo atrasou o atendimento dele. Caso não tenha atrasado, responda "Atendido sem atraso".',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
@@ -88,8 +88,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'comentarioLivreBOT',
-                'contexto' => 'Você pediu para o usuário contar, de maneira geral, qual foi a experiência dele no atendimento médico de hoje.',
-                'formato_resposta' => 'De acordo com a prompt do usuário, faça um breve resumo sobre a experiência dele.',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você pediu para o usuário contar, de maneira geral, qual foi a experiência dele no atendimento médico de hoje.',
+                'formato_resposta' => 'De acordo com a prompt do usuário, faça um breve resumo sobre a experiência dele. Resposta curta e objetiva.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
                 'model' => 'llama3.2',
@@ -98,8 +98,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'encerramentoPesquisaBOT',
-                'contexto' => 'Você pediu para o usuário contar, de maneira geral, qual foi a experiência dele no atendimento médico de hoje.',
-                'formato_resposta' => 'De acordo com a prompt do usuário, avalie o sentimento dele, e envie uma mensagem de encerramento, sendo gentil, informando que a Prefeitura de Araucária agradece a participação dele na pesquisa de satisfação.',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você pediu para o usuário contar, de maneira geral, qual foi a experiência dele no atendimento médico de hoje.',
+                'formato_resposta' => 'De acordo com a prompt do usuário, avalie o sentimento dele, e envie uma mensagem de encerramento, sendo gentil, informando que a Prefeitura de Araucária agradece a participação dele na pesquisa de satisfação. Resposta curta e objetiva.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
                 'model' => 'llama3.2',
@@ -118,7 +118,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'classificaTipoMensagemBOT',
-                'contexto' => 'Você deve classificar o prompt do usuário. As classificações permitidas são: Dúvida, Reclamação, Sugestão, Elogio ou Outro',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você deve classificar o prompt do usuário. As classificações permitidas são: Dúvida, Reclamação, Sugestão, Elogio ou Outro',
                 'formato_resposta' => 'De acordo com a prompt do usuário, qual a classificação do prompt, sem ponto, nada mais, em pt-br.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,
@@ -128,7 +128,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'nome' => 'classificaSentimentoBOT',
-                'contexto' => 'Você deve analisar o prompt do usuário para identificar o sentimento dele. As opções permitidas são: Satisfeito, Irritado, Triste, Entusiasmado ou Neutro',
+                'contexto' => 'Você pode falar livremente sobre qualquer assunto. Você deve analisar o prompt do usuário para identificar o sentimento dele. As opções permitidas são: Satisfeito, Irritado, Triste, Entusiasmado ou Neutro',
                 'formato_resposta' => 'De acordo com a prompt do usuário, qual o sentimento do usuário, sem ponto, nada mais, em pt-br.',
                 'temperatura' => 0.5,
                 'top_p' => 0.5,

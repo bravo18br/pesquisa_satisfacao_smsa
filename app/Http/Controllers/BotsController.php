@@ -10,7 +10,7 @@ class BotsController extends Controller
 {
     public function promptBot($prompt, $bot_nome)
     {
-        Log::info("promptBot($prompt, $bot_nome)");
+        // Log::info("promptBot($prompt, $bot_nome)");
         $bot = Bot::where("nome", $bot_nome)->first();
         $params = [
             "model" => $bot->model,
