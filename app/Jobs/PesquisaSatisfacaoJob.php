@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use DateTime;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,6 +15,7 @@ use App\Http\Controllers\BotsController;
 
 use App\Models\ProcessadaPesquisa;
 use App\Models\PerguntaPesquisa;
+use App\Models\RespostaPesquisa;
 use App\Models\EvolutionEvent;
 
 class PesquisaSatisfacaoJob implements ShouldQueue
@@ -36,8 +38,20 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             ->where('pesquisaConcluida', false)
             ->first();
 
-        if (!$pesquisa) {
+        $respostaOriginal = RespostaPesquisa::where('numeroWhats', $this->telefonePesquisa)
+            ->where('pesquisaConcluida', false)
+            ->first();
+
+        if (!$pesquisa || !$respostaOriginal) {
             return;
+        }
+
+        //Fazer um controle de encerramento por tempo de inatividade
+        $ultimaAtualizacao = new DateTime($pesquisa->updated_at);
+        $agora = new DateTime();
+        $intervalo = $ultimaAtualizacao->diff($agora)->i; // Obtém a diferença em minutos
+        if ($intervalo > 1 && $intervalo < 5) {
+            $evolution->enviaWhats($this->telefonePesquisa, "Um minuto sem resposta...");
         }
 
         if (is_null($pesquisa->primeiroContato)) {
@@ -59,6 +73,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         if (is_null($pesquisa->autorizacaoLGPD)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
+                // Grava a resposta original do DB para processamento futuro
+                $respostaOriginal->autorizacaoLGPD = $mensagens;
+                $respostaOriginal->save();
+
+                // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'lgpdAutorizacaoBOT');
                 $responseBotData = $responseBot->getData(true); // Converte para array associativo
                 $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
@@ -80,6 +99,9 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     $pesquisa->numeroWhats = null;
                     $pesquisa->pesquisaConcluida = true;
                     $pesquisa->save();
+                    $respostaOriginal->numeroWhats = null;
+                    $respostaOriginal->pesquisaConcluida = true;
+                    $respostaOriginal->save();
                     return 0;
                 } else {
                     $pergunta_nomeUnidadeSaude = PerguntaPesquisa::where('pesquisa', 'smsa')
@@ -98,6 +120,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         if (is_null($pesquisa->nomeUnidadeSaude)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
+                // Grava a resposta original do DB para processamento futuro
+                $respostaOriginal->nomeUnidadeSaude = $mensagens;
+                $respostaOriginal->save();
+
+                // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'unidadeAtendimentoBOT');
                 $responseBotData = $responseBot->getData(true); // Converte para array associativo
                 $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
@@ -124,6 +151,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         if (is_null($pesquisa->recepcaoUnidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
+                // Grava a resposta original do DB para processamento futuro
+                $respostaOriginal->recepcaoUnidade = $mensagens;
+                $respostaOriginal->save();
+
+                // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'recepcaoUnidadeBOT');
                 $responseBotData = $responseBot->getData(true); // Converte para array associativo
                 $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
@@ -150,6 +182,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         if (is_null($pesquisa->limpezaUnidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
+                // Grava a resposta original do DB para processamento futuro
+                $respostaOriginal->limpezaUnidade = $mensagens;
+                $respostaOriginal->save();
+
+                // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'limpezaConservacaoBOT');
                 $responseBotData = $responseBot->getData(true); // Converte para array associativo
                 $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
@@ -176,6 +213,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         if (is_null($pesquisa->medicoQualidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
+                // Grava a resposta original do DB para processamento futuro
+                $respostaOriginal->medicoQualidade = $mensagens;
+                $respostaOriginal->save();
+
+                // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'medicoQualidadeBOT');
                 $responseBotData = $responseBot->getData(true); // Converte para array associativo
                 $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
@@ -201,6 +243,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         if (is_null($pesquisa->exameQualidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
+                // Grava a resposta original do DB para processamento futuro
+                $respostaOriginal->exameQualidade = $mensagens;
+                $respostaOriginal->save();
+
+                // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'exameQualidadeBOT');
                 $responseBotData = $responseBot->getData(true); // Converte para array associativo
                 $response = $responseBotData['response'] ?? null; // Obtém a chave 'response'
@@ -227,6 +274,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
 
             if ($mensagens) {
+                // Grava a resposta original do DB para processamento futuro
+                $respostaOriginal->tempoAtendimento = $mensagens;
+                $respostaOriginal->save();
+
+                // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'tempoAtendimentoBOT');
                 $responseBotData = $responseBot->getData(true);
                 $response = $responseBotData['response'] ?? null;
@@ -253,6 +305,11 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
 
             if ($mensagens) {
+                // Grava a resposta original do DB para processamento futuro
+                $respostaOriginal->comentarioLivre = $mensagens;
+                $respostaOriginal->save();
+
+                // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'comentarioLivreBOT');
                 $responseBotData = $responseBot->getData(true);
                 $response = $responseBotData['response'] ?? null;
@@ -273,6 +330,9 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                 $pesquisa->pesquisaConcluida = true;
                 $pesquisa->numeroWhats = null;
                 $pesquisa->save();
+                $respostaOriginal->pesquisaConcluida = true;
+                $respostaOriginal->numeroWhats = null;
+                $respostaOriginal->save();
 
             }
             return;

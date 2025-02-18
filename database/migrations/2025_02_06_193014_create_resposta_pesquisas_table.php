@@ -13,15 +13,17 @@ return new class extends Migration
     {
         Schema::create('resposta_pesquisas', function (Blueprint $table) {
             $table->id();
-            $table->boolean('autorizacaoLGPD');
-            $table->string('nomeUnidadeSaude');
-            $table->text('recepcaoUnidade');
-            $table->text('limpezaUnidade');
-            $table->text('exameQualidade');
-            $table->text('medicoQualidade');
-            $table->text('pontualidadeAtendimento');
-            $table->text('notaGeral');
-            $table->text('observacaoLivre');
+            $table->string('numeroWhats')->nullable();
+            $table->text('autorizacaoLGPD')->nullable();
+            $table->text('nomeUnidadeSaude')->nullable();
+            $table->text('recepcaoUnidade')->nullable();
+            $table->text('limpezaUnidade')->nullable();
+            $table->text('exameQualidade')->nullable();
+            $table->text('medicoQualidade')->nullable();
+            $table->text('pontualidadeAtendimento')->nullable();
+            $table->text('notaGeral')->nullable();
+            $table->text('observacaoLivre')->nullable();
+            $table->boolean('pesquisaConcluida')->nullable()->default(false);
             $table->timestamps();
         });
     }

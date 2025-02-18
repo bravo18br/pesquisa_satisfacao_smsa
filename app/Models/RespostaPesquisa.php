@@ -12,7 +12,16 @@ class RespostaPesquisa extends Model
     protected $table = 'resposta_pesquisas'; // Opcional, pois o Laravel já inferiria isso corretamente
 
     protected $fillable = [
-        'nome',
-        'mensagem',
+        'numeroWhats',
+        'autorizacaoLGPD',
+        'nomeUnidadeSaude',
+        'recepcaoUnidade',
+        'limpezaUnidade',
+        'exameQualidade',
+        'medicoQualidade',
+        'pontualidadeAtendimento',
+        'notaGeral',
+        'observacaoLivre',
+        'pesquisaConcluida',
     ];
 }

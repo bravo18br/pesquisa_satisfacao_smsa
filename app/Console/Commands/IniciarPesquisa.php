@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\TelefonePesquisa;
 use App\Models\ProcessadaPesquisa;
+use App\Models\RespostaPesquisa;
 
 class IniciarPesquisa extends Command
 {
@@ -42,6 +43,14 @@ class IniciarPesquisa extends Command
 
                 if (!$existe) {
                     ProcessadaPesquisa::create(['numeroWhats' => $contato['whats']]);
+                }
+
+                $existe = RespostaPesquisa::where('numeroWhats', $contato['whats'])
+                    ->where('pesquisaConcluida', false)
+                    ->first();
+
+                if (!$existe) {
+                    RespostaPesquisa::create(['numeroWhats' => $contato['whats']]);
                 }
 
                 dispatch(new PesquisaSatisfacaoJob($contato['whats']));
