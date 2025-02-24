@@ -11,8 +11,8 @@ class Bot extends Model
     protected $fillable = [
         'nome',
         'contexto',
-        'formato_resposta',
-        'temperatura',
+        'prompt',
+        'temperature',
         'top_p',
         'model',
         'stream',

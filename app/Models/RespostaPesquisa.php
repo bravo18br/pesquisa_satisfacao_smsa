@@ -20,7 +20,6 @@ class RespostaPesquisa extends Model
         'exameQualidade',
         'medicoQualidade',
         'pontualidadeAtendimento',
-        'notaGeral',
         'observacaoLivre',
         'pesquisaConcluida',
     ];

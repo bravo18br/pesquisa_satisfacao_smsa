@@ -21,7 +21,6 @@ return new class extends Migration
             $table->text('exameQualidade')->nullable();
             $table->text('medicoQualidade')->nullable();
             $table->text('pontualidadeAtendimento')->nullable();
-            $table->text('notaGeral')->nullable();
             $table->text('observacaoLivre')->nullable();
             $table->boolean('pesquisaConcluida')->nullable()->default(false);
             $table->timestamps();

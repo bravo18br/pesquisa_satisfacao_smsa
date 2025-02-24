@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\EvolutionController;
 use App\Http\Controllers\BotsController;
 
-use App\Models\ProcessadaPesquisa;
 use App\Models\PerguntaPesquisa;
 use App\Models\RespostaPesquisa;
 use App\Models\EvolutionEvent;
@@ -33,49 +32,37 @@ class PesquisaSatisfacaoJob implements ShouldQueue
     {
         $evolution = new EvolutionController();
         $bot = new BotsController();
+        $mensagemBOTAnterior = '';
 
-        $pesquisa = ProcessadaPesquisa::where('numeroWhats', $this->telefonePesquisa)
+        $resposta = RespostaPesquisa::where('numeroWhats', $this->telefonePesquisa)
             ->where('pesquisaConcluida', false)
             ->first();
 
-        $respostaOriginal = RespostaPesquisa::where('numeroWhats', $this->telefonePesquisa)
-            ->where('pesquisaConcluida', false)
-            ->first();
-
-        if (!$pesquisa || !$respostaOriginal) {
+        if (!$resposta) {
+            Log::error('Não existe resposta criada.');
             return;
         }
 
-        //Fazer um controle de encerramento por tempo de inatividade
-        $ultimaAtualizacao = new DateTime($pesquisa->updated_at);
-        $agora = new DateTime();
-        $intervalo = $ultimaAtualizacao->diff($agora)->i; // Obtém a diferença em minutos
-        if ($intervalo > 1 && $intervalo < 5) {
-            $evolution->enviaWhats($this->telefonePesquisa, "Um minuto sem resposta...");
-        }
+        if (is_null($resposta->autorizacaoLGPD)) {
 
-        if (is_null($pesquisa->primeiroContato)) {
-            $pergunta = PerguntaPesquisa::where('pesquisa', 'smsa')
-                ->where('nome', 'autorizacaoLGPD')
-                ->first();
+            $responseBot = $bot->promptBot($mensagens, 'contatoInicialBOT');
+            $responseBotData = $responseBot->getData(true); 
+            $response = $responseBotData['response'] ?? null;
+            $mensagemBOTAnterior = $response;
 
-            if (!$pergunta) {
-                return;
-            }
-
-            if ($evolution->enviaWhats($this->telefonePesquisa, $pergunta->mensagem)) {
-                $pesquisa->primeiroContato = 'não';
-                $pesquisa->save();
+            if ($evolution->enviaWhats($this->telefonePesquisa, $response)) {
+                $resposta->primeiroContato = 'não';
+                $resposta->save();
             }
             return;
         }
 
-        if (is_null($pesquisa->autorizacaoLGPD)) {
+        if (is_null($resposta->autorizacaoLGPD)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
                 // Grava a resposta original do DB para processamento futuro
-                $respostaOriginal->autorizacaoLGPD = $mensagens;
-                $respostaOriginal->save();
+                $resposta->autorizacaoLGPD = $mensagens;
+                $resposta->save();
 
                 // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'lgpdAutorizacaoBOT');
@@ -86,9 +73,9 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     return;
                 }
 
-                $pesquisa->autorizacaoLGPD = $response;
+                $resposta->autorizacaoLGPD = $response;
 
-                if ($pesquisa->autorizacaoLGPD != 'sim') {
+                if ($resposta->autorizacaoLGPD != 'sim') {
                     $agradecimento = PerguntaPesquisa::where('pesquisa', 'smsa')
                         ->where('nome', 'lgpdNegado')
                         ->first();
@@ -96,12 +83,12 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     if ($agradecimento) {
                         $evolution->enviaWhats($this->telefonePesquisa, $agradecimento->mensagem);
                     }
-                    $pesquisa->numeroWhats = null;
-                    $pesquisa->pesquisaConcluida = true;
-                    $pesquisa->save();
-                    $respostaOriginal->numeroWhats = null;
-                    $respostaOriginal->pesquisaConcluida = true;
-                    $respostaOriginal->save();
+                    $resposta->numeroWhats = null;
+                    $resposta->pesquisaConcluida = true;
+                    $resposta->save();
+                    $resposta->numeroWhats = null;
+                    $resposta->pesquisaConcluida = true;
+                    $resposta->save();
                     return 0;
                 } else {
                     $pergunta_nomeUnidadeSaude = PerguntaPesquisa::where('pesquisa', 'smsa')
@@ -112,17 +99,17 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                         $evolution->enviaWhats($this->telefonePesquisa, $pergunta_nomeUnidadeSaude->mensagem);
                     }
                 }
-                $pesquisa->save();
+                $resposta->save();
             }
             return;
         }
 
-        if (is_null($pesquisa->nomeUnidadeSaude)) {
+        if (is_null($resposta->nomeUnidadeSaude)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
                 // Grava a resposta original do DB para processamento futuro
-                $respostaOriginal->nomeUnidadeSaude = $mensagens;
-                $respostaOriginal->save();
+                $resposta->nomeUnidadeSaude = $mensagens;
+                $resposta->save();
 
                 // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'unidadeAtendimentoBOT');
@@ -133,8 +120,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     return;
                 }
 
-                $pesquisa->nomeUnidadeSaude = $response;
-                $pesquisa->save();
+                $resposta->nomeUnidadeSaude = $response;
+                $resposta->save();
 
                 $pergunta_recepcaoUnidade = PerguntaPesquisa::where('pesquisa', 'smsa')
                     ->where('nome', 'recepcaoUnidade')
@@ -148,12 +135,12 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return;
         }
 
-        if (is_null($pesquisa->recepcaoUnidade)) {
+        if (is_null($resposta->recepcaoUnidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
                 // Grava a resposta original do DB para processamento futuro
-                $respostaOriginal->recepcaoUnidade = $mensagens;
-                $respostaOriginal->save();
+                $resposta->recepcaoUnidade = $mensagens;
+                $resposta->save();
 
                 // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'recepcaoUnidadeBOT');
@@ -164,8 +151,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     return;
                 }
 
-                $pesquisa->recepcaoUnidade = $response;
-                $pesquisa->save();
+                $resposta->recepcaoUnidade = $response;
+                $resposta->save();
 
                 $pergunta_limpezaUnidade = PerguntaPesquisa::where('pesquisa', 'smsa')
                     ->where('nome', 'limpezaUnidade')
@@ -179,12 +166,12 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return;
         }
 
-        if (is_null($pesquisa->limpezaUnidade)) {
+        if (is_null($resposta->limpezaUnidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
                 // Grava a resposta original do DB para processamento futuro
-                $respostaOriginal->limpezaUnidade = $mensagens;
-                $respostaOriginal->save();
+                $resposta->limpezaUnidade = $mensagens;
+                $resposta->save();
 
                 // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'limpezaConservacaoBOT');
@@ -195,8 +182,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     return;
                 }
 
-                $pesquisa->limpezaUnidade = $response;
-                $pesquisa->save();
+                $resposta->limpezaUnidade = $response;
+                $resposta->save();
 
                 $pergunta_medicoQualidade = PerguntaPesquisa::where('pesquisa', 'smsa')
                     ->where('nome', 'medicoQualidade')
@@ -210,12 +197,12 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return;
         }
 
-        if (is_null($pesquisa->medicoQualidade)) {
+        if (is_null($resposta->medicoQualidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
                 // Grava a resposta original do DB para processamento futuro
-                $respostaOriginal->medicoQualidade = $mensagens;
-                $respostaOriginal->save();
+                $resposta->medicoQualidade = $mensagens;
+                $resposta->save();
 
                 // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'medicoQualidadeBOT');
@@ -226,8 +213,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     return;
                 }
 
-                $pesquisa->medicoQualidade = $response;
-                $pesquisa->save();
+                $resposta->medicoQualidade = $response;
+                $resposta->save();
 
                 $pergunta_exameQualidade = PerguntaPesquisa::where('pesquisa', 'smsa')
                     ->where('nome', 'exameQualidade')
@@ -240,12 +227,12 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return;
         }
 
-        if (is_null($pesquisa->exameQualidade)) {
+        if (is_null($resposta->exameQualidade)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             if ($mensagens) {
                 // Grava a resposta original do DB para processamento futuro
-                $respostaOriginal->exameQualidade = $mensagens;
-                $respostaOriginal->save();
+                $resposta->exameQualidade = $mensagens;
+                $resposta->save();
 
                 // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'exameQualidadeBOT');
@@ -256,8 +243,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     return;
                 }
 
-                $pesquisa->exameQualidade = $response;
-                $pesquisa->save();
+                $resposta->exameQualidade = $response;
+                $resposta->save();
 
                 $pergunta_tempoAtendimento = PerguntaPesquisa::where('pesquisa', 'smsa')
                     ->where('nome', 'tempoAtendimento')
@@ -270,13 +257,13 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return;
         }
 
-        if (is_null($pesquisa->tempoAtendimento)) {
+        if (is_null($resposta->tempoAtendimento)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
 
             if ($mensagens) {
                 // Grava a resposta original do DB para processamento futuro
-                $respostaOriginal->tempoAtendimento = $mensagens;
-                $respostaOriginal->save();
+                $resposta->tempoAtendimento = $mensagens;
+                $resposta->save();
 
                 // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'tempoAtendimentoBOT');
@@ -287,8 +274,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     return;
                 }
 
-                $pesquisa->tempoAtendimento = $response;
-                $pesquisa->save();
+                $resposta->tempoAtendimento = $response;
+                $resposta->save();
 
                 $pergunta_comentarioLivre = PerguntaPesquisa::where('pesquisa', 'smsa')
                     ->where('nome', 'comentarioLivre')
@@ -301,13 +288,13 @@ class PesquisaSatisfacaoJob implements ShouldQueue
             return;
         }
 
-        if (is_null($pesquisa->comentarioLivre)) {
+        if (is_null($resposta->comentarioLivre)) {
             $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
 
             if ($mensagens) {
                 // Grava a resposta original do DB para processamento futuro
-                $respostaOriginal->comentarioLivre = $mensagens;
-                $respostaOriginal->save();
+                $resposta->comentarioLivre = $mensagens;
+                $resposta->save();
 
                 // Aciona o BOT
                 $responseBot = $bot->promptBot($mensagens, 'comentarioLivreBOT');
@@ -318,8 +305,8 @@ class PesquisaSatisfacaoJob implements ShouldQueue
                     return;
                 }
 
-                $pesquisa->comentarioLivre = $response;
-                $pesquisa->save();
+                $resposta->comentarioLivre = $response;
+                $resposta->save();
 
                 $encerramentoBot = $bot->promptBot($response, 'encerramentoPesquisaBOT');
                 $encerramentoBotData = $encerramentoBot->getData(true);
@@ -327,12 +314,12 @@ class PesquisaSatisfacaoJob implements ShouldQueue
 
                 $evolution->enviaWhats($this->telefonePesquisa, $encerramento);
 
-                $pesquisa->pesquisaConcluida = true;
-                $pesquisa->numeroWhats = null;
-                $pesquisa->save();
-                $respostaOriginal->pesquisaConcluida = true;
-                $respostaOriginal->numeroWhats = null;
-                $respostaOriginal->save();
+                $resposta->pesquisaConcluida = true;
+                $resposta->numeroWhats = null;
+                $resposta->save();
+                $resposta->pesquisaConcluida = true;
+                $resposta->numeroWhats = null;
+                $resposta->save();
 
             }
             return;

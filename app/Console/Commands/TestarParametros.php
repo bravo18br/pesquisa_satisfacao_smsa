@@ -9,16 +9,17 @@ use App\Http\Controllers\BotsController;
 class TestarParametros extends Command
 {
     protected $signature = 'app:testar_ia';
-    protected $description = 'Chama a função testarParametrosIA($prompt, $bot_nome)  para testar parâmetros da IA.';
+    protected $description = 'Chama a função testarParametrosIA($prompt, $model) para testar parâmetros da IA.';
 
     public function handle()
     {
-        $contexto = '///CONTEXTO:Você pode falar livremente sobre qualquer assunto. Você perguntou para o usuário o nome do médico e se ele gostou do atendimento médico.';
-        $mensagem = '///MENSAGEM:fui atendido pelo dr paulo. ele parece educado, mas ele estava pelado. achei estranho.';
-        $formatoresposta = '///RESPOSTA IDEAL:Usando a mensagem do usuário como parâmetro, informe se o usuário gostou ou não do médico que lhe atendeu. Resposta curta e objetiva.';
+        $contexto = '<|start_contexto|>Você é uma IA que executa pesquisa de satisafação sobre a qualidade do atendimento médico para a Secretaria Municipal de Saude da Prefeitura de Araucária.<|end_contexto|>';
+        $mensagem = '<|start_mensagem_usuario|><|end_mensagem_usuario|>';
+        $prompt = '<|start_prompt|>Envie mensagem inicial para um cidadão, informe que a pesquisa é sigilosa e pergunte se ele autoriza ("sim" ou "não") iniciar a pesquisa, conforme LGPD exige. Mensagem breve e objetiva. Seu único objetivo nessa mensagem é saber se o usuário autoriza a pesquisa.<|end_prompt|>';
         $model = 'llama3.2';
+        $max_length=100;
 
         $botsController = new BotsController;
-        $botsController->testarParametrosIA($contexto . $mensagem . $formatoresposta, $model);
+        $botsController->testarParametrosIA($contexto . $mensagem . $prompt, $model, $max_length);
     }
 }

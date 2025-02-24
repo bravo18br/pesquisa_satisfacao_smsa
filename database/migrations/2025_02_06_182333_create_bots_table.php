@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('nome')->unique();
             $table->text('contexto');
-            $table->text('formato_resposta');
-            $table->float('temperatura');
+            $table->text('prompt');
+            $table->float('temperature');
             $table->float('top_p');
             $table->string('model');
             $table->string('stream');
