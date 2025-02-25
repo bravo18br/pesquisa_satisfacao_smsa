@@ -9,7 +9,13 @@ use PgVector\Laravel\Vector;
 class Embedding extends Model
 {
     use HasNeighbors;
-    protected $fillable = ['content', 'embedding'];
+
+    protected $fillable = ['content', 'embedding', 'file_id'];
 
     protected $casts = ['embedding' => Vector::class];
+
+    public function file()
+    {
+        return $this->belongsTo(FileMetadata::class, 'file_id');
+    }
 }
