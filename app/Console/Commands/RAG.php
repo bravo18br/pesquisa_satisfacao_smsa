@@ -42,7 +42,7 @@ class RAG extends Command
                 'source' => 'Local' // Pode mudar conforme necessário
             ]);
 
-            $this->info("\nMetadados capturados");
+            // $this->info("\nMetadados capturados");
         } catch (\Exception $e) {
             $this->error("\nErro ao capturar metadados: " . $e->getMessage());
             return;
@@ -60,12 +60,12 @@ class RAG extends Command
 
         // Gerar os chunks com barra de progresso
         $chunkController = app(ChunkController::class);
-        $this->info("\nGerando chunks...");
+        // $this->info("\nGerando chunks...");
         $chunks = $chunkController->chunkText($text, 500, 100, $this);
 
         // Gerar embeddings com barra de progresso
         $embeddingController = app(EmbeddingController::class);
-        $this->info("\n\nGerando embeddings...");
+        // $this->info("\n\nGerando embeddings...");
 
         $this->withProgressBar($chunks, function ($chunk) use ($embeddingController, $pdfMetadata) {
             $embeddingData = $embeddingController->generateEmbedding($chunk);
@@ -78,6 +78,6 @@ class RAG extends Command
             }
         });
 
-        $this->info("\n\nProcesso concluído!");
+        // $this->info("\n\nProcesso concluído!");
     }
 }
