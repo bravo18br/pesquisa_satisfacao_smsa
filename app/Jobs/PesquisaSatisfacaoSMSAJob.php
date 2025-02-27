@@ -27,9 +27,9 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
         'nomeUnidadeSaude' => 'Qual o nome da unidade de saúde em que você esteve recentemente?',
         'recepcaoUnidade' => 'Você gostou da recepção na unidade?',
         'limpezaUnidade' => 'Como você avalia a limpeza e conservação da unidade de saúde?',
-        'medicoQualidade' => 'O médico que lhe atendeu foi educado e prestativo? Como você avalia ele?',
-        'exameQualidade' => 'Você fez algum exame? Foi bem executado?',
-        'pontualidadeAtendimento' => 'Como você avalia o tempo de espera para ser atendido? Foi rápido ou demorou?',
+        'medicoQualidade' => "O médico que lhe atendeu foi educado e prestativo?" . PHP_EOL . "Como você avalia ele?" . PHP_EOL . "Qual o nome dele?",
+        'exameQualidade' => "Você fez algum exame?" . PHP_EOL . "Foi bem executado?",
+        'pontualidadeAtendimento' => "Como você avalia o tempo de espera para ser atendido?" . PHP_EOL . "Foi rápido ou demorou?",
         'observacaoLivre' => 'Deixe um comentário sobre o atendimento em geral, você está satisfeito?',
     ];
 
@@ -111,6 +111,7 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
         $this->encerramentoBOT($evolution, $ollama, $respostas, $pesquisa);
 
     }
+
     private function fazerPergunta($pergunta, $evolution, $pesquisa, &$respostas)
     {
         try {

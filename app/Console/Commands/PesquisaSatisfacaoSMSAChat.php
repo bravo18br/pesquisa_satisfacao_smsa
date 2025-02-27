@@ -15,7 +15,8 @@ class PesquisaSatisfacaoSMSAChat extends Command
     {
 
         // Vai receber a lista de telefones para pesquisa pelo IPM
-        $telefones = ['4184191656'];
+        // $telefones = ['4184191656'];
+        $telefones = ['4136141593'];
 
         // Vai ciclar os telefones encontrados
         foreach ($telefones as $telefone) {
@@ -29,6 +30,5 @@ class PesquisaSatisfacaoSMSAChat extends Command
             dispatch(new PesquisaSatisfacaoSMSAJob($telefone));
         }
         sleep(10);
-
     }
 }

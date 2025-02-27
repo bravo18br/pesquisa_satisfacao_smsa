@@ -20,7 +20,7 @@ class RAG extends Command
     public function handle()
     {
         // Caminho do PDF de exemplo
-        $pdfPath = storage_path('app/Controle de Precatórios - Prefeitura Araucária.pdf');
+        $pdfPath = storage_path('app/DocumentoModeloRAG.pdf');
 
         // Verifica se o arquivo existe
         if (!file_exists($pdfPath)) {

@@ -12,7 +12,7 @@ use Pgvector\Vector;
 class RAGChat extends Command
 {
     protected $signature = 'block:chat {mensagem?}'; //funcionando ok
-    protected $description = 'Faz uma chat usando RAG';
+    protected $description = 'Faz um chat usando RAG';
 
     public function handle()
     {
