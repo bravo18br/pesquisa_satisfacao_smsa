@@ -51,7 +51,7 @@ class RAGPergunta extends Command
         $prompt = $contexto . "<|start_prompt|>{$pergunta}<|end_prompt|>";
 
         // Configuração do request para streaming
-        $model = "llama3.1";
+        $model = "llama3.2";
         $params = [
             "model" => $model,
             // "raw"=> true,
@@ -69,7 +69,7 @@ class RAGPergunta extends Command
         $this->info($responseData['response']);
         $tempoProcessamento = microtime(true) - $inicioProcessamento;
 
-        $this->warn("Telemetria:");
+        $this->warn("\n\nTelemetria:");
         $this->warn("Tempo embeddings: " . round($tempoEmbeddings, 4) . " segundos");
         $this->warn("Tempo {$model}: " . round($tempoProcessamento, 4) . " segundos");
     }
