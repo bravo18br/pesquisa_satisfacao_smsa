@@ -44,7 +44,7 @@ class PesquisaSatisfacaoJob implements ShouldQueue
         }
 
         if (is_null($resposta->autorizacaoLGPD)) {
-
+            $mensagens = $this->buscaUltimasMensagens($this->telefonePesquisa);
             $responseBot = $bot->promptBot($mensagens, 'contatoInicialBOT');
             $responseBotData = $responseBot->getData(true); 
             $response = $responseBotData['response'] ?? null;

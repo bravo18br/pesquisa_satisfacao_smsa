@@ -9,20 +9,19 @@ use App\Models\FileMetadata;
 use Illuminate\Console\Command;
 use Pgvector\Vector;
 
-class RAGPergunta extends Command
+class RAGChat extends Command
 {
-    protected $signature = 'block:pergunta {pergunta?}'; // Funcionando corretamente
-    protected $description = 'Faz uma pergunta usando RAG';
+    protected $signature = 'block:chat {mensagem?}'; //funcionando ok
+    protected $description = 'Faz uma chat usando RAG';
 
     public function handle()
     {
-        // Capturar a pergunta do argumento ou solicitar ao usuário
-        $pergunta = $this->argument('pergunta') ?? $this->ask('Digite sua pergunta:');
-        // echo "Pergunta: $pergunta\n";
+        // Capturar a mensagem do argumento ou solicitar ao usuário
+        $mensagem = $this->argument('mensagem') ?? $this->ask('Digite sua mensagem:');
 
         // Gerar embeddings
         $embeddingController = app(EmbeddingController::class);
-        $embedding = new Vector($embeddingController->generateEmbedding($pergunta)['embedding']);
+        $embedding = new Vector($embeddingController->generateEmbedding($mensagem)['embedding']);
         $contextEmbeddings = Embedding::orderByRaw('embedding <=> ?', [$embedding])->limit(3)->get();
 
         // Criar um contexto formatado para o Ollama
@@ -43,15 +42,23 @@ class RAGPergunta extends Command
         }
 
         // Criando o prompt final para o Ollama
-        $prompt = $contexto . "<|start_prompt|>{$pergunta}<|end_prompt|>";
+        $prompt = $contexto . "<|start_prompt|>{$mensagem}<|end_prompt|>";
 
-        // echo "Prompt: $prompt\n";
+        // echo $prompt;
 
         // Configuração do request para streaming
         $params = [
             "model" => 'llama3.1',
-            // "raw"=> true,
-            "prompt" => $prompt,
+            "messages" => [
+                [
+                    "role" => "system",
+                    "content" => "Você é um assistente administrativo virtual. Forneça as informações solicitadas."
+                ],
+                [
+                    "role" => "user",
+                    "content" => $prompt
+                ]
+            ],
             "stream" => false,
             "max_length" => 300,
             "options" => [
@@ -60,8 +67,12 @@ class RAGPergunta extends Command
             ]
         ];
         $ollama = new OllamaController();
-        $response = $ollama->promptOllama($params);
-        $responseData = json_decode($response->getContent(), true);
-        $this->info($responseData['response']);
+        $response = $ollama->chatOllama($params);
+        if (isset($response['message']['content'])) {
+            $this->info($response['message']['content']);
+        } else {
+            $this->error("Erro: Resposta inesperada do Ollama.");
+            $this->info("Resposta completa: " . json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
     }
 }

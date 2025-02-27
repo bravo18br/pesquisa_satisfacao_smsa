@@ -20,25 +20,35 @@ class EvolutionController extends Controller
 
     public function enviaWhats($phone, $mensagem)
     {
-        $numero8digitos = $this->formatarNumero8digitos($phone);
-        $response = $this->enviaMensagem($numero8digitos, $mensagem);
+        $whatsEnviado = false;
+        $tentativas = 0;
+        $maxTentativas = 5;
 
-        if ($response->successful()) {
-            return true;
-        } else {
-            $body = json_decode($response->body(), true);
-            log::error('EvolutionController.php - Erro ao enviar mensagem: ' . $body);
-            if (isset($body['response']['message'][0]['exists']) && $body['response']['message'][0]['exists'] === false) {
-                $numero9digitos = $this->formatarNumero9digitos($phone);
-                $response = $this->enviaMensagem($numero9digitos, $mensagem);
-                if ($response->successful()) {
-                    return true;
-                } else {
-                    return false;
+        while (!$whatsEnviado && $tentativas < $maxTentativas) {
+            $numero8digitos = $this->formatarNumero8digitos($phone);
+            $response = $this->enviaMensagem($numero8digitos, $mensagem);
+
+            if ($response->successful()) {
+                return true;
+            } else {
+                $body = json_decode($response->body(), true);
+                log::error('EvolutionController.php - Erro ao enviar mensagem: ' . $body);
+                if (isset($body['response']['message'][0]['exists']) && $body['response']['message'][0]['exists'] === false) {
+                    $numero9digitos = $this->formatarNumero9digitos($phone);
+                    $response = $this->enviaMensagem($numero9digitos, $mensagem);
+                    if ($response->successful()) {
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             }
+
+            $tentativas++;
+            Log::error('Falha ao enviar whats para: ' . $phone . ' após ' . $maxTentativas . ' tentativas.');
             return false;
         }
+
     }
 
     private function enviaMensagem($phone, $mensagem)

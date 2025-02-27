@@ -30,7 +30,7 @@ class OllamaController extends Controller
         $baseUrl = env('OLLAMA_API_URL', 'http://localhost:11434');
 
         try {
-            $response = Http::timeout(600)->post("$baseUrl/api/generate",  $params);
+            $response = Http::timeout(600)->post("$baseUrl/api/generate", $params);
 
             $body = $response->getBody();
             while (!$body->eof()) {
@@ -42,7 +42,23 @@ class OllamaController extends Controller
         }
     }
 
+    public function chatOllama($params)
+    {
+        set_time_limit(600);
+        $baseUrl = env('OLLAMA_API_URL', 'http://localhost:11434');
 
+        try {
+            $response = Http::timeout(600)->post("$baseUrl/api/chat", $params);
+
+            if ($response->successful()) {
+                return $response->json();
+            } else {
+                return response()->json(["error" => $response->json('error')]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(["error" => $e->getMessage()], 500);
+        }
+    }
 
 
 }

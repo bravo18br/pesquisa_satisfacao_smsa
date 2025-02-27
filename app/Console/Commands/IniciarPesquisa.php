@@ -11,7 +11,7 @@ use App\Models\RespostaPesquisa;
 
 class IniciarPesquisa extends Command
 {
-    protected $signature = 'app:iniciar_pesquisa';
+    protected $signature = 'app:iniciar_pesquisa'; //essa pesquisa usa o generate do ollama
     protected $description = 'Busca telefones dos usuários para a pesquisa e cria um job para cada um.';
 
     public function handle()
