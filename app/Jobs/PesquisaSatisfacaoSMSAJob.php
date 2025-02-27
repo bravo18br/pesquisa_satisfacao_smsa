@@ -20,17 +20,17 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
     protected $telefonePesquisa;
     protected $evolution;
     protected $ollama;
-    protected $respostas = [];
+    protected $respostas;
 
     protected $perguntas = [
-        'autorizacaoLGPD' => 'Sou Paulo da Secretaria Municipal de Saúde de Araucária PR! Você me autoriza a fazer uma pesquisa de satisfação sobre o seu atendimento médico de hoje? ( Sim / Não )',
-        'unidadeAtendimento' => 'Qual o nome da unidade de saúde em que você esteve recentemente?',
+        'autorizacaoLGPD' => "Sou Paulo da Secretaria Municipal de Saúde de Araucária PR!" . PHP_EOL . "Você me autoriza a fazer uma pesquisa de satisfação sobre o seu atendimento médico de hoje?" . PHP_EOL . "( Sim / Não )",
+        'nomeUnidadeSaude' => 'Qual o nome da unidade de saúde em que você esteve recentemente?',
         'recepcaoUnidade' => 'Você gostou da recepção na unidade?',
-        'limpezaConservacao' => 'Como você avalia a limpeza e conservação da unidade de saúde?',
+        'limpezaUnidade' => 'Como você avalia a limpeza e conservação da unidade de saúde?',
         'medicoQualidade' => 'O médico que lhe atendeu foi educado e prestativo? Como você avalia ele?',
         'exameQualidade' => 'Você fez algum exame? Foi bem executado?',
-        'tempoAtendimento' => 'Como você avalia o tempo de espera para ser atendido? Foi rápido ou demorou?',
-        'comentarioLivre' => 'Deixe um comentário sobre o atendimento em geral, você está satisfeito?',
+        'pontualidadeAtendimento' => 'Como você avalia o tempo de espera para ser atendido? Foi rápido ou demorou?',
+        'observacaoLivre' => 'Deixe um comentário sobre o atendimento em geral, você está satisfeito?',
     ];
 
     public function __construct($telefonePesquisa)
@@ -40,7 +40,7 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
 
     public function handle()
     {
-        Log::info('JOB para telefone ' . $this->telefonePesquisa . ' iniciado.');
+        Log::info('JOB para telefone ' . $this->telefonePesquisa . ' iniciado');
 
         $pesquisa = RespostaPesquisa::where('numeroWhats', $this->telefonePesquisa)
             ->where('pesquisaConcluida', false)
@@ -48,74 +48,89 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
 
         $evolution = app(EvolutionController::class);
         $ollama = app(OllamaController::class);
+        $respostas = [];
 
         // Fazer pergunta autorizacaoLGPD
-        $this->fazerPergunta('autorizacaoLGPD', $evolution);
+        $this->fazerPergunta('autorizacaoLGPD', $evolution, $pesquisa, $respostas);
 
         // Registrar resposta da autorizacaoLGPD
-        $this->registrarResposta('autorizacaoLGPD', $pesquisa);
+        $this->capturarResposta('autorizacaoLGPD', $evolution, $pesquisa, $respostas);
 
         // Avaliar resposta da autorizacaoLGPD
-        $this->avaliarResposta_autorizacaoLGPD_BOT($pesquisa, $evolution, $ollama);
+        if (!$this->avaliarResposta_autorizacaoLGPD_BOT($evolution, $ollama, $pesquisa, $respostas)) {
+            Log::info('JOB para telefone ' . $this->telefonePesquisa . ' encerrado');
+            return;
+        }
 
-        // Fazer pergunta unidadeAtendimento
-        $this->fazerPergunta('unidadeAtendimento', $evolution);
+        // Fazer pergunta nomeUnidadeSaude
+        $this->fazerPergunta('nomeUnidadeSaude', $evolution, $pesquisa, $respostas);
 
-        // Registrar resposta da unidadeAtendimento
-        $this->registrarResposta('unidadeAtendimento', $pesquisa);
+        // Registrar resposta da nomeUnidadeSaude
+        $this->capturarResposta('nomeUnidadeSaude', $evolution, $pesquisa, $respostas);
 
-        // Avaliar resposta da unidadeAtendimento
-        $this->avaliarResposta_unidadeAtendimento_BOT($evolution, $ollama);
+        // Avaliar resposta da nomeUnidadeSaude
+        $this->avaliarResposta_nomeUnidadeSaude_BOT($evolution, $ollama, $respostas);
 
         // Fazer pergunta recepcaoUnidade
-        $this->fazerPergunta('recepcaoUnidade', $evolution);
+        $this->fazerPergunta('recepcaoUnidade', $evolution, $pesquisa, $respostas);
 
         // Registrar resposta da recepcaoUnidade
-        $this->registrarResposta('recepcaoUnidade', $pesquisa);
+        $this->capturarResposta('recepcaoUnidade', $evolution, $pesquisa, $respostas);
 
-        // Fazer pergunta limpezaConservacao
-        $this->fazerPergunta('limpezaConservacao', $evolution);
+        // Fazer pergunta limpezaUnidade
+        $this->fazerPergunta('limpezaUnidade', $evolution, $pesquisa, $respostas);
 
-        // Registrar resposta da limpezaConservacao
-        $this->registrarResposta('limpezaConservacao', $pesquisa);
+        // Registrar resposta da limpezaUnidade
+        $this->capturarResposta('limpezaUnidade', $evolution, $pesquisa, $respostas);
 
         // Fazer pergunta medicoQualidade
-        $this->fazerPergunta('medicoQualidade', $evolution);
+        $this->fazerPergunta('medicoQualidade', $evolution, $pesquisa, $respostas);
 
         // Registrar resposta da medicoQualidade
-        $this->registrarResposta('medicoQualidade', $pesquisa);
+        $this->capturarResposta('medicoQualidade', $evolution, $pesquisa, $respostas);
 
         // Fazer pergunta exameQualidade
-        $this->fazerPergunta('exameQualidade', $evolution);
+        $this->fazerPergunta('exameQualidade', $evolution, $pesquisa, $respostas);
 
         // Registrar resposta da exameQualidade
-        $this->registrarResposta('exameQualidade', $pesquisa);
+        $this->capturarResposta('exameQualidade', $evolution, $pesquisa, $respostas);
 
-        // Fazer pergunta tempoAtendimento
-        $this->fazerPergunta('tempoAtendimento', $evolution);
+        // Fazer pergunta pontualidadeAtendimento
+        $this->fazerPergunta('pontualidadeAtendimento', $evolution, $pesquisa, $respostas);
 
-        // Registrar resposta da tempoAtendimento
-        $this->registrarResposta('tempoAtendimento', $pesquisa);
+        // Registrar resposta da pontualidadeAtendimento
+        $this->capturarResposta('pontualidadeAtendimento', $evolution, $pesquisa, $respostas);
 
-        // Fazer pergunta comentarioLivre
-        $this->fazerPergunta('comentarioLivre', $evolution);
+        // Fazer pergunta observacaoLivre
+        $this->fazerPergunta('observacaoLivre', $evolution, $pesquisa, $respostas);
 
-        // Registrar resposta da comentarioLivre
-        $this->registrarResposta('comentarioLivre', $pesquisa);
+        // Registrar resposta da observacaoLivre
+        $this->capturarResposta('observacaoLivre', $evolution, $pesquisa, $respostas);
 
         //encerrar a pesquisa
-        $this->encerramentoBOT($evolution, $ollama);
+        $this->encerramentoBOT($evolution, $ollama, $respostas, $pesquisa);
 
-        Log::info('JOB para telefone ' . $this->telefonePesquisa . ' encerrado.');
-        return;
+    }
+    private function fazerPergunta($pergunta, $evolution, $pesquisa, &$respostas)
+    {
+        try {
+            if ($evolution->enviaWhats($this->telefonePesquisa, $this->perguntas[$pergunta])) {
+                $respostas[$pergunta] = 'aguardando';
+                $pesquisa->$pergunta = 'aguardando';
+                $pesquisa->save();
+                Log::info("Mensagem de {$pergunta} enviada");
+            }
+        } catch (\Exception $e) {
+            Log::error("Erro ao fazer pergunta {$pergunta}");
+        }
     }
 
-    private function encerramentoBOT($evolution, $ollama)
+    private function encerramentoBOT($evolution, $ollama, &$respostas, $pesquisa)
     {
         try {
             $prompt = '';
-            $prompt .= "<|start_pesquisador_pergunta|>{$this->perguntas['comentarioLivre']}<|end_pesquisador_pergunta|>\n";
-            $prompt .= "<|start_usuario_resposta|>{$this->respostas['comentarioLivre']}<|end_usuario_resposta|>\n";
+            $prompt .= "<|start_pesquisador_pergunta|>{$this->perguntas['observacaoLivre']}<|end_pesquisador_pergunta|>\n";
+            $prompt .= "<|start_usuario_resposta|>{$respostas['observacaoLivre']}<|end_usuario_resposta|>\n";
             $prompt .= "<|start_prompt|>Responda o usuário, agradeça e encerre a pesquisa em nome da Prefeitura de Araucaria.<|end_prompt|>";
 
             $params = [
@@ -131,7 +146,7 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
                     ]
                 ],
                 "stream" => false,
-                "max_length" => 4,
+                "max_length" => 300,
                 "options" => [
                     "temperature" => 0.0,
                     "top_p" => 0.1,
@@ -140,24 +155,25 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
 
             $response = $ollama->chatOllama($params);
             if (isset($response['message']['content'])) {
-                $evolution->enviaWhats($this->telefonePesquisa, "OK, {$this->perguntas['unidadeAtendimento']}, anotado.");
-                $evolution->enviaWhats($this->telefonePesquisa, "Vamos para a próxima pergunta.");
-                Log::info('Resposta unidadeAtendimento recebida.');
+                $evolution->enviaWhats($this->telefonePesquisa, $response['message']['content']);
+                $pesquisa->pesquisaConcluida = true;
+                $pesquisa->numeroWhats = null;
+                $pesquisa->save();
+                Log::info('EncerramentoBOT executado.');
             }
-
         } catch (\Exception $e) {
-            Log::error('Erro ao avaliar resposta da unidadeAtendimento');
+            Log::error('Erro no encerramentoBOT');
             return;
         }
     }
 
-    private function avaliarResposta_unidadeAtendimento_BOT($evolution, $ollama)
+    private function avaliarResposta_nomeUnidadeSaude_BOT($evolution, $ollama, &$respostas)
     {
         try {
             $prompt = '';
-            $prompt .= "<|start_pesquisador_pergunta|>{$this->perguntas['unidadeAtendimento']}<|end_pesquisador_pergunta|>\n";
-            $prompt .= "<|start_usuario_resposta|>{$this->capturarResposta('unidadeAtendimento', $evolution)}<|end_usuario_resposta|>\n";
-            $prompt .= "<|start_prompt|>Qual o nome da unidade de saúde que o usuário informou? Somente o nome da unidade, mais nada.<|end_prompt|>";
+            $prompt .= "<|start_pesquisador_pergunta|>{$this->perguntas['nomeUnidadeSaude']}<|end_pesquisador_pergunta|>\n";
+            $prompt .= "<|start_usuario_resposta|>{$respostas['nomeUnidadeSaude']}<|end_usuario_resposta|>\n";
+            $prompt .= "<|start_prompt|>Qual o nome da unidade de saúde que o usuário informou? Somente o nome da unidade, mais nada, sem pontuação.<|end_prompt|>";
 
             $params = [
                 "model" => 'llama3.1',
@@ -172,7 +188,7 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
                     ]
                 ],
                 "stream" => false,
-                "max_length" => 4,
+                "max_length" => 30,
                 "options" => [
                     "temperature" => 0.0,
                     "top_p" => 0.1,
@@ -181,23 +197,23 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
 
             $response = $ollama->chatOllama($params);
             if (isset($response['message']['content'])) {
-                $evolution->enviaWhats($this->telefonePesquisa, "OK, {$this->perguntas['unidadeAtendimento']}, anotado.");
+                $evolution->enviaWhats($this->telefonePesquisa, "OK, {$response['message']['content']}, anotado.");
                 $evolution->enviaWhats($this->telefonePesquisa, "Vamos para a próxima pergunta.");
-                Log::info('Resposta unidadeAtendimento recebida.');
+                Log::info('Avaliar nomeUnidadeSaude concluída.');
             }
 
         } catch (\Exception $e) {
-            Log::error('Erro ao avaliar resposta da unidadeAtendimento');
+            Log::error('Erro ao avaliar resposta da nomeUnidadeSaude: ' . $e->getMessage());
             return;
         }
     }
 
-    private function avaliarResposta_autorizacaoLGPD_BOT($pesquisa, $evolution, $ollama)
+    private function avaliarResposta_autorizacaoLGPD_BOT($evolution, $ollama, $pesquisa, &$respostas)
     {
         try {
             $prompt = '';
             $prompt .= "<|start_pesquisador_pergunta|>{$this->perguntas['autorizacaoLGPD']}<|end_pesquisador_pergunta|>\n";
-            $prompt .= "<|start_usuario_resposta|>{$this->capturarResposta('autorizacaoLGPD', $evolution)}<|end_usuario_resposta|>\n";
+            $prompt .= "<|start_usuario_resposta|>{$respostas['autorizacaoLGPD']}<|end_usuario_resposta|>\n";
             $prompt .= "<|start_prompt|>o usuário autorizou a pesquisa? responda apenas 'sim' ou 'não'. no-caps. sem pontos, nem aspas.<|end_prompt|>";
 
             $params = [
@@ -224,65 +240,42 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
             if (isset($response['message']['content']) && $response['message']['content'] === 'sim') {
                 // Agradecer por ter aceitado participar da pesquisa
                 $evolution->enviaWhats($this->telefonePesquisa, 'Excelente notícia!');
-                $evolution->enviaWhats($this->telefonePesquisa, 'A pesquisa é anônima, e as respostas serão utilizadas para melhorar os servições de saúde da cidade.');
+                $evolution->enviaWhats($this->telefonePesquisa, 'A pesquisa é anônima, e as respostas serão utilizadas para melhorar os serviços de saúde da cidade.');
                 $evolution->enviaWhats($this->telefonePesquisa, 'Vou mandar a primeira pergunta então!');
                 Log::info('Pesquisa iniciada, LGPD autorizado.');
+                return true;
             } else {
                 // Agradecer por ter respondido e encerrar a pesquisa
-                $mensagemLGPDNegada = 'Está sem tempo agora? Sem problemas, deixamos para outro momento. Obrigado por responder!';
-                if ($evolution->enviaWhats($this->telefonePesquisa, $mensagemLGPDNegada)) {
-                    $pesquisa->pesquisaConcluida = true;
-                    $pesquisa->numeroWhats = null;
-                    $pesquisa->save();
-                    Log::info('Pesquisa encerrada, LGPD não autorizado.');
-                } else {
-                    Log::error('Erro ao enviar mensagem de LGPD negado.');
-                }
-                return;
+                $evolution->enviaWhats($this->telefonePesquisa, 'Está sem tempo agora?');
+                $evolution->enviaWhats($this->telefonePesquisa, 'Sem problemas, deixamos para outro momento.');
+                $evolution->enviaWhats($this->telefonePesquisa, 'Obrigado, até mais!');
+                $pesquisa->pesquisaConcluida = true;
+                $pesquisa->numeroWhats = null;
+                $pesquisa->save();
+                Log::info('Pesquisa encerrada, LGPD não autorizado.');
+                return false;
             }
 
         } catch (\Exception $e) {
-            Log::error('Erro ao avaliar resposta da autorização');
-            return;
+            Log::error('Erro ao avaliar resposta da autorização: ' . $e->getMessage());
+            return false;
         }
     }
 
-    private function fazerPergunta($pergunta, $evolution)
-    {
-        try {
-            if ($evolution->enviaWhats($this->telefonePesquisa, $this->perguntas[$pergunta])) {
-                $this->respostas[$pergunta] = 'aguardando';
-                Log::info('Mensagem de {$pergunta} enviada.');
-            }
-        } catch (\Exception $e) {
-            Log::error('Erro ao fazer pergunta {$pergunta}');
-            return;
-        }
-    }
-
-    private function registrarResposta($pergunta, $pesquisa)
-    {
-        try {
-            $pesquisa->recepcaoUnidade = $this->respostas[$pergunta];
-            $pesquisa->save();
-            Log::info("Resposta {$pergunta} registrada");
-        } catch (\Exception $e) {
-            Log::error('Erro ao registrar resposta da {$pergunta}');
-            return;
-        }
-    }
-
-    private function capturarResposta($pergunta, $evolution)
+    private function capturarResposta($pergunta, $evolution, $pesquisa, &$respostas)
     {
         try {
             $tempoInicio = microtime(true);
             $tempoLimite = 600; // 10 minutos em segundos
 
-            while ($this->respostas[$pergunta] === 'aguardando') {
+            while ($respostas[$pergunta] === 'aguardando') {
                 $mensagem = $this->buscaUltimasMensagens($this->telefonePesquisa);
 
                 if ($mensagem) {
-                    $this->respostas[$pergunta] = $mensagem;
+                    $respostas[$pergunta] = $mensagem;
+                    $pesquisa->$pergunta = $mensagem;
+                    $pesquisa->save();
+                    Log::info("Resposta {$pergunta} registrada");
                     break;
                 }
 
@@ -294,9 +287,9 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
                 }
                 sleep(2);
             }
-            return $this->respostas[$pergunta];
+            return $respostas[$pergunta];
         } catch (\Exception $e) {
-            Log::error('Erro ao capturar a resposta da autorização com timeout de 10 minutos');
+            Log::error('Erro ao capturar a resposta com timeout de 10 minutos: ' . $e->getMessage());
             return null;
         }
     }

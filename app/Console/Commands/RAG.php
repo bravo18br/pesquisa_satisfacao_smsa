@@ -10,6 +10,7 @@ use Illuminate\Console\Command;
 use App\Http\Controllers\ChunkController;
 use Smalot\PdfParser\Parser;
 use Pgvector\Laravel\Vector;
+use Illuminate\Support\Facades\Log;
 
 class RAG extends Command
 {
@@ -19,7 +20,7 @@ class RAG extends Command
     public function handle()
     {
         // Caminho do PDF de exemplo
-        $pdfPath = storage_path('app/DocumentoModeloRAG.pdf');
+        $pdfPath = storage_path('app/Controle de Precatórios - Prefeitura Araucária.pdf');
 
         // Verifica se o arquivo existe
         if (!file_exists($pdfPath)) {
@@ -58,6 +59,8 @@ class RAG extends Command
             return;
         }
 
+        // Log::info($text);
+
         // Gerar os chunks com barra de progresso
         $chunkController = app(ChunkController::class);
         // $this->info("\nGerando chunks...");
@@ -78,6 +81,6 @@ class RAG extends Command
             }
         });
 
-        // $this->info("\n\nProcesso concluído!");
+        $this->info("\n\nProcesso concluído!");
     }
 }
