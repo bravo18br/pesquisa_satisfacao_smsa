@@ -20,12 +20,17 @@ class RAGPergunta extends Command
         $pergunta = $this->argument('pergunta') ?? $this->ask('Digite sua pergunta:');
         // echo "Pergunta: $pergunta\n";
 
+
+        
         // Gerar embeddings
+        $inicioEmbeddings = microtime(true);
         $embeddingController = app(EmbeddingController::class);
         $embedding = new Vector($embeddingController->generateEmbedding($pergunta)['embedding']);
         $contextEmbeddings = Embedding::orderByRaw('embedding <=> ?', [$embedding])->limit(3)->get();
+        $tempoEmbeddings = microtime(true) - $inicioEmbeddings;
 
         // Criar um contexto formatado para o Ollama
+        $inicioProcessamento = microtime(true);
         $contexto = '';
         foreach ($contextEmbeddings as $index => $context) {
             $metadados = FileMetadata::where('id', $context->file_id)->first();
@@ -45,11 +50,10 @@ class RAGPergunta extends Command
         // Criando o prompt final para o Ollama
         $prompt = $contexto . "<|start_prompt|>{$pergunta}<|end_prompt|>";
 
-        // echo "Prompt: $prompt\n";
-
         // Configuração do request para streaming
+        $model = "llama3.1";
         $params = [
-            "model" => 'llama3.1',
+            "model" => $model,
             // "raw"=> true,
             "prompt" => $prompt,
             "stream" => false,
@@ -63,5 +67,10 @@ class RAGPergunta extends Command
         $response = $ollama->promptOllama($params);
         $responseData = json_decode($response->getContent(), true);
         $this->info($responseData['response']);
+        $tempoProcessamento = microtime(true) - $inicioProcessamento;
+
+        $this->warn("Telemetria:");
+        $this->warn("Tempo embeddings: " . round($tempoEmbeddings, 4) . " segundos");
+        $this->warn("Tempo {$model}: " . round($tempoProcessamento, 4) . " segundos");
     }
 }
