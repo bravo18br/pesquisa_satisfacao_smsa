@@ -2,9 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Models\TelemetriaLLama31;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\BotsController;
+use App\Http\Controllers\OllamaController;
+use Pgvector\Vector;
+use App\Http\Controllers\EmbeddingController;
+use App\Models\Embedding;
+use App\Models\FileMetadata;
 
 class TestarParametros extends Command
 {
@@ -13,13 +17,89 @@ class TestarParametros extends Command
 
     public function handle()
     {
-        $contexto = '<|start_contexto|>Você é uma IA que executa pesquisa de satisafação sobre a qualidade do atendimento médico para a Secretaria Municipal de Saude da Prefeitura de Araucária.<|end_contexto|>';
-        $mensagem = '<|start_mensagem_usuario|><|end_mensagem_usuario|>';
-        $prompt = '<|start_prompt|>Envie mensagem inicial para um cidadão, informe que a pesquisa é sigilosa e pergunte se ele autoriza ("sim" ou "não") iniciar a pesquisa, conforme LGPD exige. Mensagem breve e objetiva. Seu único objetivo nessa mensagem é saber se o usuário autoriza a pesquisa.<|end_prompt|>';
-        $model = 'llama3.2';
-        $max_length=100;
+        // $modelos = ['llama3.2', 'llama3.1', 'deepseek-r1:8b', 'mistral', 'gemma', 'phi3', 'llama2-uncensored'];
+        $model = 'llama3.1';
 
-        $botsController = new BotsController;
-        $botsController->testarParametrosIA($contexto . $mensagem . $prompt, $model, $max_length);
+        foreach (range(1, 5) as $limitEmbeddings) {
+            foreach (range(0, 10) as $t) {
+                $temperature = $t / 10;
+                foreach (range(0, 10) as $p) {
+                    $top_p = $p / 10;
+
+                    $this->info("\nTestando -> Modelo: $model | Embeddings: $limitEmbeddings | Temperature: $temperature | Top P: $top_p");
+                    $this->testarBlockGenerate($limitEmbeddings, $temperature, $top_p, $model);
+                }
+            }
+        }
+    }
+
+    public function testarBlockGenerate($limitEmbeddings, $temperature, $top_p, $model)
+    {
+        // Verificar se teste já foi executado (se já está no db)
+        $teste = TelemetriaLLama31::where('embeddings', $limitEmbeddings)
+            ->where('temperature', $temperature)
+            ->where('topP', $top_p)
+            ->first();
+
+        if ($teste) {
+            $this->info("Teste já executado");
+            return;
+        }
+        
+        $pergunta = 'faça um resumo do aviso de licitacao 104/2021';
+
+        // Gerar embeddings
+        $inicioEmbeddings = microtime(true);
+        $embeddingController = app(EmbeddingController::class);
+        $embedding = new Vector($embeddingController->generateEmbedding($pergunta)['embedding']);
+        $contextEmbeddings = Embedding::orderByRaw('embedding <=> ?', [$embedding])->limit($limitEmbeddings)->get();
+        $tempoEmbeddings = microtime(true) - $inicioEmbeddings;
+
+        // Criar um contexto formatado para o Ollama
+        $inicioProcessamento = microtime(true);
+        $contexto = '';
+        foreach ($contextEmbeddings as $index => $context) {
+            $metadados = FileMetadata::where('id', $context->file_id)->first();
+            $id = $index + 1;
+            if ($metadados) {
+                $contexto .= "<|start_context_{$id}|>\n";
+                $contexto .= "<|start_context_metadata_nome_do_arquivo|>{$metadados->filename}<|end_context_metadata_nome_do_arquivo|>\n";
+                $contexto .= "<|start_context_metadata_titulo|>{$metadados->title}<|end_context_metadata_titulo|>\n";
+                $contexto .= "<|start_context_metadata_autor|>{$metadados->author}<|end_context_metadata_autor|>\n";
+                $contexto .= "<|start_context_metadata_criado_em|>{$metadados->created_at}<|end_context_metadata_criado_em|>\n";
+                $contexto .= "<|start_context_metadata_atualizado_em|>{$metadados->updated_at}<|end_context_metadata_atualizado_em|>\n";
+                $contexto .= "<|start_context_conteudo|>{$context->content}<|end_context_conteudo|>\n";
+                $contexto .= "<|end_context_{$id}|>";
+            }
+        }
+
+        // Criando o prompt final para o Ollama
+        $prompt = $contexto . "<|start_prompt|>{$pergunta}<|end_prompt|>";
+
+        // Configuração do request para streaming
+        $params = [
+            "model" => $model,
+            // "raw"=> true,
+            "prompt" => $prompt,
+            "stream" => false,
+            "max_length" => 300,
+            "options" => [
+                "temperature" => $temperature,
+                "top_p" => $top_p,
+            ]
+        ];
+        $ollama = new OllamaController();
+        $response = $ollama->promptOllama($params);
+        $responseData = json_decode($response->getContent(), true);
+        $tempoProcessamento = microtime(true) - $inicioProcessamento;
+
+        $teste = new TelemetriaLLama31();
+        $teste->embeddings = $limitEmbeddings;
+        $teste->temperature = $temperature;
+        $teste->topP = $top_p;
+        $teste->processamentoEmbeddings = round($tempoEmbeddings, 4);
+        $teste->processamentoLLM = round($tempoProcessamento, 4);
+        $teste->respostaLLM = $responseData['response'];
+        $teste->save();
     }
 }

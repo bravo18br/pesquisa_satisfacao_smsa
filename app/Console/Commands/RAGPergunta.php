@@ -21,12 +21,13 @@ class RAGPergunta extends Command
         // echo "Pergunta: $pergunta\n";
 
 
-        
+
         // Gerar embeddings
         $inicioEmbeddings = microtime(true);
         $embeddingController = app(EmbeddingController::class);
         $embedding = new Vector($embeddingController->generateEmbedding($pergunta)['embedding']);
-        $contextEmbeddings = Embedding::orderByRaw('embedding <=> ?', [$embedding])->limit(3)->get();
+        $limitEmbeddings = 5;
+        $contextEmbeddings = Embedding::orderByRaw('embedding <=> ?', [$embedding])->limit($limitEmbeddings)->get();
         $tempoEmbeddings = microtime(true) - $inicioEmbeddings;
 
         // Criar um contexto formatado para o Ollama
@@ -51,7 +52,7 @@ class RAGPergunta extends Command
         $prompt = $contexto . "<|start_prompt|>{$pergunta}<|end_prompt|>";
 
         // Configuração do request para streaming
-        $model = "llama3.2";
+        $model = "llama3.1";
         $params = [
             "model" => $model,
             // "raw"=> true,
@@ -70,7 +71,8 @@ class RAGPergunta extends Command
         $tempoProcessamento = microtime(true) - $inicioProcessamento;
 
         $this->warn("\n\nTelemetria:");
-        $this->warn("Tempo embeddings: " . round($tempoEmbeddings, 4) . " segundos");
-        $this->warn("Tempo {$model}: " . round($tempoProcessamento, 4) . " segundos");
+        $this->warn("Nr embeddings: " . $limitEmbeddings);
+        $this->warn("Processamento embeddings: " . round($tempoEmbeddings, 4) . " segundos");
+        $this->warn("Processamento {$model}: " . round($tempoProcessamento, 4) . " segundos");
     }
 }
