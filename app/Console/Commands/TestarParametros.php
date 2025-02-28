@@ -25,8 +25,6 @@ class TestarParametros extends Command
                 $temperature = $t / 10;
                 foreach (range(0, 10) as $p) {
                     $top_p = $p / 10;
-
-                    $this->info("\nTestando -> Modelo: $model | Embeddings: $limitEmbeddings | Temperature: $temperature | Top P: $top_p");
                     $this->testarBlockGenerate($limitEmbeddings, $temperature, $top_p, $model);
                 }
             }
@@ -42,10 +40,10 @@ class TestarParametros extends Command
             ->first();
 
         if ($teste) {
-            $this->info("Teste já executado");
             return;
         }
-        
+        $this->info("\nTestando -> Modelo: $model | Embeddings: $limitEmbeddings | Temperature: $temperature | Top P: $top_p");
+
         $pergunta = 'faça um resumo do aviso de licitacao 104/2021';
 
         // Gerar embeddings
@@ -92,6 +90,12 @@ class TestarParametros extends Command
         $response = $ollama->promptOllama($params);
         $responseData = json_decode($response->getContent(), true);
         $tempoProcessamento = microtime(true) - $inicioProcessamento;
+
+        // Se não houver resposta, pula a execução
+        if (!isset($responseData['response']) || empty(trim($responseData['response']))) {
+            $this->warn("Nenhuma resposta recebida do modelo. Descartando este teste.");
+            return;
+        }
 
         $teste = new TelemetriaLLama31();
         $teste->embeddings = $limitEmbeddings;
