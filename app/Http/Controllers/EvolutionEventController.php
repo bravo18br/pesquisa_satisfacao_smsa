@@ -24,8 +24,8 @@ class EvolutionEventController extends Controller
             ]);
             return response()->json(['message' => 'Evento salvo com sucesso!'], 201);
         } catch (\Exception $e) {
-            \Log::error('Evento não salvo. Erro: ' . $e->getMessage());
-            \Log::error('Data: ' . json_encode($data));
+            Log::error('Evento não salvo. Erro: ' . $e->getMessage());
+            Log::error('Data: ' . json_encode($data));
             return response()->json(['error' => 'Erro ao processar evento', 'details' => $e->getMessage()], 500);
         }
     }

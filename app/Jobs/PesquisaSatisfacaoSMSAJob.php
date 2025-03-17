@@ -135,7 +135,7 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
             $prompt .= "<|start_prompt|>Responda o usuário, agradeça e encerre a pesquisa em nome da Prefeitura de Araucaria.<|end_prompt|>";
 
             $params = [
-                "model" => 'llama3.1',
+                "model" => env('OLLAMA_MODEL', 'llama3.1'),
                 "messages" => [
                     [
                         "role" => "system",
@@ -149,8 +149,8 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
                 "stream" => false,
                 "max_length" => 300,
                 "options" => [
-                    "temperature" => 0.0,
-                    "top_p" => 0.1,
+                    "temperature" => (float)env('OLLAMA_MODEL_TEMPERATURE', 0.1),
+                    "top_p" => (float)env('OLLAMA_MODEL_TOP_P', 0.1),
                 ]
             ];
 
@@ -177,7 +177,7 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
             $prompt .= "<|start_prompt|>Qual o nome da unidade de saúde que o usuário informou? Somente o nome da unidade, mais nada, sem pontuação.<|end_prompt|>";
 
             $params = [
-                "model" => 'llama3.1',
+                "model" => env('OLLAMA_MODEL', 'llama3.1'),
                 "messages" => [
                     [
                         "role" => "system",
@@ -191,8 +191,8 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
                 "stream" => false,
                 "max_length" => 30,
                 "options" => [
-                    "temperature" => 0.0,
-                    "top_p" => 0.1,
+                    "temperature" => (float)env('OLLAMA_MODEL_TEMPERATURE', 0.1),
+                    "top_p" => (float)env('OLLAMA_MODEL_TOP_P', 0.1),
                 ]
             ];
 
@@ -218,7 +218,7 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
             $prompt .= "<|start_prompt|>o usuário autorizou a pesquisa? responda apenas 'sim' ou 'não'. no-caps. sem pontos, nem aspas.<|end_prompt|>";
 
             $params = [
-                "model" => 'llama3.1',
+                "model" => env('OLLAMA_MODEL', 'llama3.1'),
                 "messages" => [
                     [
                         "role" => "system",
@@ -232,8 +232,8 @@ class PesquisaSatisfacaoSMSAJob implements ShouldQueue
                 "stream" => false,
                 "max_length" => 4,
                 "options" => [
-                    "temperature" => 0.0,
-                    "top_p" => 0.2,
+                    "temperature" => (float)env('OLLAMA_MODEL_TEMPERATURE', 0.1),
+                    "top_p" => (float)env('OLLAMA_MODEL_TOP_P', 0.1),
                 ]
             ];
 
